@@ -2,19 +2,20 @@ import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
-    Dimensions,
-    ImageBackground,
-    SafeAreaView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Dimensions,
+  ImageBackground,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
+const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#35d07f";
+
 const { width } = Dimensions.get('window');
-const backgroundImage = require('../assets/images/bg.jpg');
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -202,7 +203,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   forgotText: {
-    color: '#00BFFF',
+    color: GREEN,
     fontWeight: '600',
   },
   dividerContainer: {
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
     color: '#888',
   },
   contactAdmin: {
-    color: '#00BFFF',
+    color: GREEN,
     fontWeight: '600',
   },
 });
