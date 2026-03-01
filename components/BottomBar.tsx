@@ -11,8 +11,8 @@ export default function PosBottomBar({ state, navigation }: any) {
 
   const tabs = [
     { name: "Home", icon: <LayoutGrid size={22} color="rgb(114, 134, 134)" />},
-    { name: "Menu", icon: <Clipboard size={22} color="rgb(114, 134, 134)" /> },
-    { name: "Orders", icon: <Plus size={36} color="#000" /> }, // FAB
+    { name: "Menu/index", icon: <Clipboard size={22} color="rgb(114, 134, 134)" /> },
+    { name: "Orders", icon: <Plus size={36} color="rgb(255, 255, 255)" /> }, // FAB
     { name: "Tables", icon: <MaterialCommunityIcons name="table-furniture" size={22} color="rgb(114, 134, 134)" /> },
     { name: "Settings", icon: <Settings size={22} color="rgb(114, 134, 134)" /> },
   ];
@@ -33,7 +33,7 @@ export default function PosBottomBar({ state, navigation }: any) {
                 <View style={styles.fab}>
                   {tab.icon}
                 </View>
-                <Text style={styles.label}>Orders</Text>
+                <Text style={[styles.label, isFocused && styles.active]}>Orders</Text>
               </TouchableOpacity>
             );
           }
@@ -48,7 +48,7 @@ export default function PosBottomBar({ state, navigation }: any) {
                 {React.cloneElement(tab.icon, { color: isFocused ? GREEN : tab.icon.props.color })}
               </View>
               <Text style={[styles.label, isFocused && styles.active]}>
-                {tab.name}
+                {tab.name.split("/")[0]}
               </Text>
             </TouchableOpacity>
           );
@@ -84,8 +84,8 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     color: "rgb(114, 134, 134)",
-    marginTop: 8,
-    marginBottom: 4,
+    marginTop: 4,
+    marginBottom: 8,
   },
   active: {
     color: GREEN,
