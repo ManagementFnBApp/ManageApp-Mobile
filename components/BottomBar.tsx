@@ -10,11 +10,11 @@ export default function PosBottomBar({ state, navigation }: any) {
   const insets = useSafeAreaInsets();
 
   const tabs = [
-    { name: "Home", icon: <LayoutGrid size={22} color="#9aa" />},
-    { name: "Menu", icon: <Clipboard size={22} color="#9aa" /> },
+    { name: "Home", icon: <LayoutGrid size={22} color="rgb(114, 134, 134)" />},
+    { name: "Menu", icon: <Clipboard size={22} color="rgb(114, 134, 134)" /> },
     { name: "Orders", icon: <Plus size={36} color="#000" /> }, // FAB
-    { name: "Tables", icon: <MaterialCommunityIcons name="table-furniture" size={22} color="#9aa" /> },
-    { name: "Settings", icon: <Settings size={22} color="#9aa" /> },
+    { name: "Tables", icon: <MaterialCommunityIcons name="table-furniture" size={22} color="rgb(114, 134, 134)" /> },
+    { name: "Settings", icon: <Settings size={22} color="rgb(114, 134, 134)" /> },
   ];
 
   return (
@@ -60,14 +60,14 @@ export default function PosBottomBar({ state, navigation }: any) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: "#0b2b1f",
+    backgroundColor: "#97b79d",
   },
   container: {
     flexDirection: "row",
     height: 70,
     justifyContent: "space-around",
     alignItems: "flex-end",
-    backgroundColor: "#0b2b1f",
+    backgroundColor: "#fcfcfc",
 
     shadowColor: "#000",
     shadowOpacity: 0.4,
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 11,
-    color: "#9aa",
+    color: "rgb(114, 134, 134)",
     marginTop: 8,
     marginBottom: 4,
   },
