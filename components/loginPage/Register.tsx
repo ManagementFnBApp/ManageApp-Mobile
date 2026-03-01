@@ -87,11 +87,11 @@ export default function Register({ loading, setLoading, onSuccess }: RegisterPro
             <View style={styles.inputGroup}>
                 <Text style={styles.label}>Username</Text>
                 <View style={styles.inputWrapper}>
-                    <FontAwesome name="user" size={20} color="#888" style={styles.icon} />
+                    <FontAwesome name="user" size={20} color="#aaa" style={styles.icon} />
                     <TextInput
                         style={styles.input}
                         placeholder="Enter Username"
-                        placeholderTextColor="#888"
+                        placeholderTextColor="#aaa"
                         value={username}
                         onChangeText={setUsername}
                         autoCapitalize="none"
@@ -104,11 +104,11 @@ export default function Register({ loading, setLoading, onSuccess }: RegisterPro
             <View style={styles.inputGroup}>
                 <Text style={styles.label}>Email</Text>
                 <View style={styles.inputWrapper}>
-                    <FontAwesome name="envelope" size={18} color="#888" style={styles.icon} />
+                    <FontAwesome name="envelope" size={18} color="#aaa" style={styles.icon} />
                     <TextInput
                         style={styles.input}
                         placeholder="Enter Email"
-                        placeholderTextColor="#888"
+                        placeholderTextColor="#aaa"
                         value={email}
                         onChangeText={setEmail}
                         keyboardType="email-address"
@@ -122,11 +122,11 @@ export default function Register({ loading, setLoading, onSuccess }: RegisterPro
             <View style={styles.inputGroup}>
                 <Text style={styles.label}>Password</Text>
                 <View style={styles.inputWrapper}>
-                    <FontAwesome name="lock" size={20} color="#888" style={styles.icon} />
+                    <FontAwesome name="lock" size={20} color="#aaa" style={styles.icon} />
                     <TextInput
                         style={styles.input}
                         placeholder="********"
-                        placeholderTextColor="#888"
+                        placeholderTextColor="#aaa"
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry={!showPassword}
@@ -135,7 +135,7 @@ export default function Register({ loading, setLoading, onSuccess }: RegisterPro
                         <FontAwesome
                             name={showPassword ? 'eye-slash' : 'eye'}
                             size={18}
-                            color="#888"
+                            color="#aaa"
                         />
                     </TouchableOpacity>
                 </View>
@@ -145,11 +145,11 @@ export default function Register({ loading, setLoading, onSuccess }: RegisterPro
             <View style={styles.inputGroup}>
                 <Text style={styles.label}>Confirm Password</Text>
                 <View style={styles.inputWrapper}>
-                    <FontAwesome name="lock" size={20} color="#888" style={styles.icon} />
+                    <FontAwesome name="lock" size={20} color="#aaa" style={styles.icon} />
                     <TextInput
                         style={styles.input}
                         placeholder="********"
-                        placeholderTextColor="#888"
+                        placeholderTextColor="#aaa"
                         value={confirmPassword}
                         onChangeText={setConfirmPassword}
                         secureTextEntry={!showConfirmPassword}
@@ -158,7 +158,7 @@ export default function Register({ loading, setLoading, onSuccess }: RegisterPro
                         <FontAwesome
                             name={showConfirmPassword ? 'eye-slash' : 'eye'}
                             size={18}
-                            color="#888"
+                            color="#aaa"
                         />
                     </TouchableOpacity>
                 </View>
@@ -181,15 +181,18 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     label: {
-        color: '#ddd',
+        color: '#333',
         fontSize: 14,
+        fontWeight: '600',
         marginBottom: 8,
     },
     inputWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#333',
+        backgroundColor: '#f4f5f7',
         borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#e8eaed',
         paddingHorizontal: 15,
         height: 55,
     },
@@ -198,7 +201,7 @@ const styles = StyleSheet.create({
     },
     input: {
         flex: 1,
-        color: 'white',
+        color: '#111',
         fontSize: 16,
     },
     registerButton: {
@@ -208,6 +211,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginTop: 10,
+        shadowColor: GREEN,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
     },
     registerButtonText: {
         color: 'white',

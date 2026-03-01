@@ -14,7 +14,7 @@ export default function PosBottomBar({ state, navigation }: any) {
     { name: "Menu/index", icon: <Clipboard size={22} color="rgb(114, 134, 134)" /> },
     { name: "Orders", icon: <Plus size={36} color="rgb(255, 255, 255)" /> }, // FAB
     { name: "Tables", icon: <MaterialCommunityIcons name="table-furniture" size={22} color="rgb(114, 134, 134)" /> },
-    { name: "Settings", icon: <Settings size={22} color="rgb(114, 134, 134)" /> },
+    { name: "Settings/index", icon: <Settings size={22} color="rgb(114, 134, 134)" /> },
   ];
 
   return (

@@ -13,12 +13,14 @@ import {
   View
 } from 'react-native';
 
+import * as authApi from '@/apis/auth';
 import Loading from '@/components/LoadingScreen/Loading';
 import Login from '@/components/loginPage/Login';
 import Register from '@/components/loginPage/Register';
 import SuccessPopup from '@/components/Notifications/Success';
 import { useAuth } from '@/providers/AuthProvider';
 import { useRouter } from 'expo-router';
+import ErrorPopup from '../Notifications/Error';
 
 
 const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#35d07f";
@@ -32,8 +34,14 @@ export default function LoginPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const indicatorAnim = useRef(new Animated.Value(0)).current;
 
+
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const showError = (msg: string) => setErrorMessage(msg);
+  const clearError = () => setErrorMessage(null);
+
   const auth = useAuth();
   const router = useRouter();
+  const { login } = auth!;
 
   useEffect(() => {
     if (auth?.token) {
@@ -56,6 +64,37 @@ export default function LoginPage() {
     switchTab('login');
   };
 
+  const handleLogin = async (username: string, password: string) => {
+    clearError();
+    setLoading(true);
+    try {
+      const res = await authApi.login({ username, password });
+      //console.log('Login response:', res);
+
+      const tokenValue = (res as any).token;
+      if (typeof tokenValue !== 'string') {
+        console.warn('Login response token is not a string, converting:', tokenValue);
+      }
+      await login(tokenValue as any);
+    } catch (error: any) {
+      const status: number | undefined = error.status ?? error.response?.status;
+      const message: string = error.message || error.response?.message || 'An error occurred during login';
+
+      if (status === 401) {
+        showError(message);
+      } else if (status === 500) {
+        showError('Server error – please try again later');
+      } else {
+        showError(message);
+      }
+
+      console.error('Login error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   const TAB_WIDTH = (width - 60) / 2;
   const indicatorTranslateX = indicatorAnim.interpolate({
     inputRange: [0, 1],
@@ -64,15 +103,20 @@ export default function LoginPage() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       {/* Header Image Section */}
       <ImageBackground
         source={require('../../assets/images/bg.jpg')}
         style={styles.headerImage}
       >
+        <ErrorPopup
+          message={errorMessage}
+          onDismiss={clearError}
+          autoDismissMs={4000}
+        />
         <LinearGradient
-          colors={['rgba(0,0,0,0.1)', 'rgba(18,18,18,1)']}
+          colors={['rgba(0,0,0,0.1)', 'rgba(255,255,255,1)']}
           style={styles.gradient}
         >
           <SafeAreaView style={styles.headerContent}>
@@ -129,7 +173,6 @@ export default function LoginPage() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Success popup — lives here so it persists after switching to Login tab */}
         <SuccessPopup
           message={successMessage}
           onDismiss={() => setSuccessMessage(null)}
@@ -137,12 +180,12 @@ export default function LoginPage() {
         />
 
         {activeTab === 'login'
-          ? <Login loading={loading} setLoading={setLoading} />
+          ? <Login loading={loading} setLoading={setLoading} handleLogin={handleLogin} />
           : <Register
-              loading={loading}
-              setLoading={setLoading}
-              onSuccess={handleRegisterSuccess}
-            />
+            loading={loading}
+            setLoading={setLoading}
+            onSuccess={handleRegisterSuccess}
+          />
         }
       </ScrollView>
 
@@ -154,7 +197,7 @@ export default function LoginPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#ffffff',
   },
   headerImage: {
     height: width * 0.7,
@@ -175,23 +218,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoText: {
-    color: 'white',
+    color: '#111',
     fontSize: 18,
     fontWeight: '700',
     marginTop: 5,
   },
   welcomeContainer: {
-    marginTop: 30,
+    marginTop: 40,
     alignItems: 'center',
     marginBottom: 20,
   },
   welcomeTitle: {
-    color: 'white',
+    color: '#111',
     fontSize: 42,
     fontWeight: 'bold',
   },
   welcomeSubtitle: {
-    color: '#ccc',
+    color: '#555',
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
@@ -204,7 +247,7 @@ const styles = StyleSheet.create({
   },
   tabBackground: {
     flexDirection: 'row',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#eef0f2',
     borderRadius: 12,
     padding: 4,
     position: 'relative',
@@ -229,7 +272,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   tabTextActive: {
-    color: 'white',
+    color: '#fff',
   },
   scrollContent: {
     paddingBottom: 40,

@@ -76,6 +76,10 @@ export default function ErrorPopup({ message, onDismiss, autoDismissMs }: ErrorP
 
 const styles = StyleSheet.create({
     container: {
+        position: 'absolute',
+        top: 40,
+        left: 20,
+        right: 20,
         marginTop: 10,
         flexDirection: 'row',
         alignItems: 'center',
