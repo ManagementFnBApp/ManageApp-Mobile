@@ -1,5 +1,5 @@
 import { useAuth } from '@/providers/AuthProvider';
-import { Feather, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { Feather, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -9,10 +9,9 @@ import {
     ScrollView,
     StatusBar,
     StyleSheet,
-    Switch,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 
 const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#35d07f';
@@ -119,7 +118,9 @@ export default function SettingsPage() {
                             source={{ uri: 'https://i.pravatar.cc/150?img=11' }}
                             style={styles.avatar}
                         />
-
+                        <TouchableOpacity style={styles.avatarEdit}>
+                            <Feather name="edit-2" size={10} color="#fff" />
+                        </TouchableOpacity>
                     </View>
                     <Text style={styles.profileName}>{username}</Text>
                     <Text style={styles.profileRole}>{userRole ?? 'User'}</Text>
@@ -149,7 +150,7 @@ export default function SettingsPage() {
                         onPress={() => router.push('/Menu')}
                     />
                     <View style={styles.divider} />
-                    <SettingRow
+                    {/* <SettingRow
                         icon={<MaterialCommunityIcons name="table-chair" size={18} color={GREEN} />}
                         label="Table Layout"
                         onPress={() => router.push('/Menu')}
@@ -159,10 +160,10 @@ export default function SettingsPage() {
                         icon={<Feather name="clock" size={18} color={GREEN} />}
                         label="Business Hours"
                         onPress={() => router.push('/Menu')}
-                    />
+                    /> */}
                 </Section>
 
-                {/* App Settings */}
+                {/* App Settings
                 <Section title="APP SETTINGS">
                     <SettingRow
                         icon={<Ionicons name="notifications-outline" size={18} color={GREEN} />}
@@ -203,7 +204,7 @@ export default function SettingsPage() {
                             />
                         }
                     />
-                </Section>
+                </Section> */}
 
                 {/* Support */}
                 <Section title="SUPPORT">

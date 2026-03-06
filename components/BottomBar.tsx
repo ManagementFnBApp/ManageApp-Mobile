@@ -12,7 +12,7 @@ export default function PosBottomBar({ state, navigation }: any) {
   const tabs = [
     { name: "Home", icon: <LayoutGrid size={22} color="rgb(114, 134, 134)" />},
     { name: "Menu/index", icon: <Clipboard size={22} color="rgb(114, 134, 134)" /> },
-    { name: "Orders", icon: <Plus size={36} color="rgb(255, 255, 255)" /> }, // FAB
+    { name: "Orders/index", icon: <Plus size={36} color="rgb(255, 255, 255)" /> }, // FAB
     { name: "Tables", icon: <MaterialCommunityIcons name="table-furniture" size={22} color="rgb(114, 134, 134)" /> },
     { name: "Settings/index", icon: <Settings size={22} color="rgb(114, 134, 134)" /> },
   ];
@@ -23,7 +23,7 @@ export default function PosBottomBar({ state, navigation }: any) {
         {tabs.map((tab, index) => {
           const isFocused = state.index === index;
 
-          if (tab.name === "Orders") {
+          if (tab.name === "Orders/index") {
             return (
               <TouchableOpacity
                 key={index}

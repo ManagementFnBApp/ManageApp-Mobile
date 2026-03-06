@@ -7,7 +7,8 @@ import {
     View,
 } from 'react-native';
 
-import ProductCard, { MenuItem } from './ProductCard';
+import { MenuItem } from '@/apis/ProductsAPI';
+import ProductCard from './ProductCard';
 
 interface ProductsListProps {
     items: MenuItem[];
@@ -38,7 +39,7 @@ export default function ProductsList({ items }: ProductsListProps) {
 const styles = StyleSheet.create({
     grid: {
         paddingHorizontal: 16,
-        paddingTop: 14,
+        paddingBottom: 100,
     },
     row: {
         justifyContent: 'flex-start',

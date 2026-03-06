@@ -1,3 +1,4 @@
+import { MenuItem } from '@/apis/ProductsAPI';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
@@ -9,17 +10,6 @@ import {
 } from 'react-native';
 
 const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#35d07f';
-
-export interface MenuItem {
-    PDid: string;
-    PDname: string;
-    PDprice: number;
-    PDinStock: boolean;
-    PDcategory: string;
-    PDdescription?: string;
-    PDimage?: string;
-    PDcategoryOpen?: boolean;
-}
 
 interface ProductCardProps {
     item: MenuItem;

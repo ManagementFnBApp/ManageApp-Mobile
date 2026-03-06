@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ClipboardPlus } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     SafeAreaView,
     ScrollView,
@@ -13,33 +13,33 @@ import {
     View,
 } from 'react-native';
 
-import { MenuItem } from './Products/ProductCard';
+import { getAllCategories, getAllProducts, MenuItem } from '@/apis/ProductsAPI';
 import ProductsList from './Products/ProductsList';
 
 const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#35d07f';
 
-const CATEGORIES = ['All', 'Coffee', 'Juice', 'Soft Drink', 'Tea', 'Snack'];
-
-const MENU_ITEMS: MenuItem[] = [
-    { PDid: '1', PDdescription: 'A strong and bold coffee', PDname: 'Espresso', PDprice: 25, PDinStock: true, PDcategory: 'Coffee', PDimage: 'https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?w=400&q=80' },
-    { PDid: '2', PDdescription: 'A creamy and smooth coffee with milk', PDname: 'Milk Coffee', PDprice: 29, PDinStock: true, PDcategory: 'Coffee', PDimage: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&q=80' },
-    { PDid: '3', PDdescription: 'A simple black coffee without milk or sugar', PDname: 'Black Coffee', PDprice: 20, PDinStock: true, PDcategory: 'Coffee', PDimage: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&q=80' },
-    { PDid: '4', PDdescription: 'A creamy coffee with steamed milk and foam on top', PDname: 'Latte', PDprice: 35, PDinStock: false, PDcategory: 'Coffee', PDimage: 'https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?w=400&q=80' },
-    { PDid: '5', PDdescription: 'A coffee with steamed milk and a layer of foam on top of it', PDname: 'Cappuccino', PDprice: 35, PDinStock: true, PDcategory: 'Coffee', PDimage: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=400&q=80' },
-    { PDid: '6', PDdescription: 'A chocolate-flavored coffee drink made with espresso and steamed milk and topped with whipped cream.', PDname: 'Mocha', PDprice: 39, PDinStock: true, PDcategory: 'Coffee', PDimage: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400&q=80' },
-    { PDid: '7', PDdescription: 'Freshly squeezed orange juice', PDname: 'Orange Juice', PDprice: 25, PDinStock: true, PDcategory: 'Juice', PDimage: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&q=80' },
-    { PDid: '8', PDdescription: 'A refreshing carbonated soft drink', PDname: 'Coca Cola', PDprice: 15, PDinStock: true, PDcategory: 'Soft Drink', PDimage: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400&q=80' },
-    { PDid: '9', PDdescription: 'A hot beverage made from steeping tea leaves in boiling water', PDname: 'Green Tea', PDprice: 20, PDinStock: true, PDcategory: 'Tea', PDimage: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=80' },
-    { PDid: '10', PDdescription: 'A light and crispy snack, perfect for sharing', PDname: 'French Fries', PDprice: 30, PDinStock: false, PDcategory: 'Snack', PDimage: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=400&q=80' },
-    { PDid: '11', PDdescription: 'A sweet and fluffy pastry filled with cream', PDname: 'Cream Puff', PDprice: 22, PDinStock: true, PDcategory: 'Snack', PDimage: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&q=80' },
-];
-
 export default function MenuPage() {
     const [search, setSearch] = useState('');
     const [activeCategory, setActiveCategory] = useState('All');
+
+    const [ categories, setCategories ] = useState<string[]>(['All']);
+    const [products, setProducts] = useState<MenuItem[]>([]);
     const router = useRouter();
 
-    const filtered = MENU_ITEMS.filter(item => {
+    useEffect(() => {
+        const fetchProducts = async () => {
+            const allProducts = await getAllProducts()
+            setProducts(allProducts)
+        }
+        const fetchCategories = async () => {
+            const allCategories = await getAllCategories()
+            setCategories(allCategories)
+        }
+        fetchProducts()
+        fetchCategories()
+    }, [])
+
+    const filtered = products.filter(item => {
         const matchCategory = activeCategory === 'All' || item.PDcategory.trim() === activeCategory;
         const matchSearch = item.PDname.toLowerCase().includes(search.toLowerCase());
         return matchCategory && matchSearch;
@@ -73,7 +73,7 @@ export default function MenuPage() {
                 style={styles.categoryScroll}
                 contentContainerStyle={styles.categoryContent}
             >
-                {CATEGORIES.map(cat => (
+                {categories.map(cat => (
                     <TouchableOpacity
                         key={cat}
                         style={[styles.pill, activeCategory === cat && styles.pillActive]}
