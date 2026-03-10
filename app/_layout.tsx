@@ -1,10 +1,11 @@
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useSubscription } from '@/hooks/useSubscription';
+import { SubscriptionProvider } from '@/providers/SubscriptionProvider';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
+import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
 import { AuthProvider, useAuth } from "../providers/AuthProvider";
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useEffect, useState } from 'react';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -16,35 +17,46 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
-        <RootNav />
+        <SubscriptionProvider>
+          <RootNav />
+        </SubscriptionProvider>
       </AuthProvider>
-      {/* <StatusBar style="auto" /> */}
     </ThemeProvider>
   );
 }
 
 function RootNav() {
-  const [token, setToken] = useState<string | null>(null);
   const auth = useAuth();
-  const loading = auth?.loading;
-  
-  //console.log('Auth token:', token);
-  useEffect(() => {
-    if (auth) {
-      setToken(auth.token);
-    }
-  }, [loading]);
+  const subscription = useSubscription();
 
-  if (loading) return null;
-  
+  if (auth?.loading || subscription?.loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {!token ? (
-        // <Stack.Screen name="loginPage" />
-        <Stack.Screen name="loginPage" />
+    <>
+      {!auth?.token ? (
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="loginPage" />
+        </Stack>
       ) : (
-        <Stack.Screen name="(tabs)" />
+        <>
+          {(auth.user?.role !== null && auth.user?.role === "SHOP_OWNER" && !auth?.loading && !subscription?.loading) ? (
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(tabs)" />
+            </Stack>
+          ) : (
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="SubscriptionPage" />
+              <Stack.Screen name="CheckoutPage" />
+            </Stack >
+          )}
+        </>
       )}
-    </Stack>
+    </>
   );
 }

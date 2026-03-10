@@ -7,18 +7,18 @@ import {
     View,
 } from 'react-native';
 
-import { MenuItem } from '@/apis/ProductsAPI';
+import { Product } from '@/apis/ProductsAPI';
 import ProductCard from './ProductCard';
 
 interface ProductsListProps {
-    items: MenuItem[];
+    items: Product[];
 }
 
 export default function ProductsList({ items }: ProductsListProps) {
     return (
         <FlatList
             data={items}
-            keyExtractor={item => item.PDid}
+            keyExtractor={item => String(item.productId)}
             numColumns={2}
             renderItem={({ item, index }) => (
                 <ProductCard item={item} index={index} />

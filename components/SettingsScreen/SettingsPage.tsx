@@ -73,6 +73,7 @@ export default function SettingsPage() {
     
     useEffect(() => {
         if (auth?.user) {
+            console.log('role: ', auth.user)
             setUsername(auth.user.username);
             if (auth.user.role === 'SHOPOWNER') {
                 setUserRole('Shop Owner');

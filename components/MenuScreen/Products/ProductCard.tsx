@@ -1,4 +1,4 @@
-import { MenuItem } from '@/apis/ProductsAPI';
+import { Product } from '@/apis/ProductsAPI';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
@@ -12,7 +12,7 @@ import {
 const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#35d07f';
 
 interface ProductCardProps {
-    item: MenuItem;
+    item: Product;
     index: number;
 }
 
@@ -23,16 +23,19 @@ export default function ProductCard({ item, index }: ProductCardProps) {
         router.push({
             pathname: '/Menu/detailProduct',
             params: {
-                PDid: item.PDid,
-                PDname: item.PDname,
-                PDprice: item.PDprice,
-                PDdescription: item.PDdescription || '',
-                PDcategory: item.PDcategory,
-                PDinStock: String(item.PDinStock),
-                PDcategoryOpen: String(item.PDcategoryOpen || false), // default to false if undefined
+                productId: item.productId,
+                productName: item.productName,
+                listPrice: item.listPrice,
+                importPrice: item.importPrice,
+                description: item.description || '',
+                categoryId: item.categoryId,
+                isActive: String(item.isActive),
+                sku: item.sku,
             },
         });
     };
+
+    const inStock = item.isActive;
 
     return (
         <TouchableOpacity
@@ -41,20 +44,23 @@ export default function ProductCard({ item, index }: ProductCardProps) {
             activeOpacity={0.85}
         >
             <View style={styles.imageWrapper}>
-                <Image source={{ uri: item.PDimage }} style={styles.image} />
-                {!item.PDinStock && (
+                <Image
+                    source={{ uri: `https://placehold.co/400x300/f0f0f0/aaa?text=${encodeURIComponent(item.productName)}` }}
+                    style={styles.image}
+                />
+                {!inStock && (
                     <View style={styles.overlay}>
                         <Text style={styles.overlayText}>SOLD OUT</Text>
                     </View>
                 )}
             </View>
             <View style={styles.info}>
-                <Text style={styles.name}>{item.PDname}</Text>
-                <Text style={styles.price}>{item.PDprice}.000 VND</Text>
+                <Text style={styles.name}>{item.productName}</Text>
+                <Text style={styles.price}>{item.listPrice}.000 VND</Text>
                 <View style={styles.stockRow}>
-                    <View style={[styles.dot, { backgroundColor: item.PDinStock ? GREEN : '#e74c3c' }]} />
-                    <Text style={[styles.stockText, { color: item.PDinStock ? GREEN : '#e74c3c' }]}>
-                        {item.PDinStock ? 'IN STOCK' : 'SOLD OUT'}
+                    <View style={[styles.dot, { backgroundColor: inStock ? GREEN : '#e74c3c' }]} />
+                    <Text style={[styles.stockText, { color: inStock ? GREEN : '#e74c3c' }]}>
+                        {inStock ? 'IN STOCK' : 'SOLD OUT'}
                     </Text>
                 </View>
             </View>
