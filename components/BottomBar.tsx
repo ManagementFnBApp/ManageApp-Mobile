@@ -1,5 +1,4 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Clipboard, LayoutGrid, Plus, Settings } from "lucide-react-native";
+import { Calendar, Clipboard, LayoutGrid, Plus, Settings } from "lucide-react-native";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -13,7 +12,7 @@ export default function PosBottomBar({ state, navigation }: any) {
     { name: "Home", icon: <LayoutGrid size={22} color="rgb(114, 134, 134)" />},
     { name: "Menu/index", icon: <Clipboard size={22} color="rgb(114, 134, 134)" /> },
     { name: "Orders/index", icon: <Plus size={36} color="rgb(255, 255, 255)" /> }, // FAB
-    { name: "Tables", icon: <MaterialCommunityIcons name="table-furniture" size={22} color="rgb(114, 134, 134)" /> },
+    { name: "Schedule/index", icon: <Calendar size={22} color="rgb(114, 134, 134)" /> },
     { name: "Settings/index", icon: <Settings size={22} color="rgb(114, 134, 134)" /> },
   ];
 
