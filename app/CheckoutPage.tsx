@@ -97,9 +97,11 @@ export default function CheckoutPage() {
 
         try {
             // Step 1: Create shop + subscription
+            console.log('1')
             const shopSub = await createSubscriptionTenant(subscriptionId, shopName.trim());
 
             // Step 2: Create pending payment
+            console.log('2')
             const payment = await createSubscriptionPayment(
                 shopSub.sub_shop_id,
                 selectedMethod,
@@ -107,8 +109,10 @@ export default function CheckoutPage() {
             );
 
             // Step 3: Confirm → activates shop + upgrades role
+            console.log('3')
             await confirmPayment(payment.sub_payment_id);
 
+            console.log('4')
             setFinalShopName(payment.shop?.shop_name || shopName.trim());
             setStep('success');
         } catch (err: any) {

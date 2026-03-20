@@ -73,13 +73,13 @@ export default function SettingsPage() {
     
     useEffect(() => {
         if (auth?.user) {
-            console.log('role: ', auth.user)
+            console.log('role: ', auth)
             setUsername(auth.user.username);
             if (auth.user.role === 'SHOPOWNER') {
                 setUserRole('Shop Owner');
             }
         }
-    }, [auth?.user]);
+    }, [auth]);
 
     const handleLogout = () => {
         Alert.alert('Log Out', 'Are you sure you want to log out?', [

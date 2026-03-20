@@ -52,6 +52,13 @@ export interface SubscriptionPayment {
   };
 }
 
+function unwrap<T>(raw: unknown): T {
+  if (raw && typeof raw === 'object' && 'data' in (raw as object)) {
+    return (raw as { data: T }).data;
+  }
+  return raw as T;
+}
+
 // ===== API FUNCTIONS =====
 
 /** Chuẩn hóa item từ API (backend trả subscription_id; Prisma có thể trả id) */
@@ -82,15 +89,29 @@ export const getSubscriptions = async (): Promise<SubscriptionPlan[]> => {
  * Đăng ký gói subscription - tạo Shop + ShopSubscription (cần login)
  * Backend: POST /subscriptions/shops, body { subscription_id, shop_name }
  */
+// export const registerShopSubscription = async (
+//   subscriptionId: number,
+//   shopName?: string,
+// ): Promise<ShopSubscription> => {
+//   const response = await apiClient.post<ShopSubscription>('/subscriptions/shops', {
+//     subscription_id: subscriptionId,
+//     shop_name: shopName ?? 'My Shop',
+//   });
+//   return response.data;
+// };
+
 export const registerShopSubscription = async (
   subscriptionId: number,
   shopName?: string,
 ): Promise<ShopSubscription> => {
-  const response = await apiClient.post<ShopSubscription>('/subscriptions/shops', {
+  console.log('1.2')
+  const response = await apiClient.post('/subscriptions/shops', {
     subscription_id: subscriptionId,
     shop_name: shopName ?? 'My Shop',
   });
-  return response.data;
+  console.log('1.5')
+  const raw = unwrap<Record<string, unknown>>(response.data);
+  return raw as unknown as ShopSubscription;
 };
 
 /**

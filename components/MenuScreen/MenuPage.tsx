@@ -13,8 +13,10 @@ import {
     View,
 } from 'react-native';
 
-import { Category, getCategories } from '@/apis/CategoriesAPI';
-import { getProducts, Product } from '@/apis/ProductsAPI';
+//import { Category } from '@/apis/CategoriesAPI';
+import { Product } from '@/apis/ProductsAPI';
+import { ShopCategoryItem, getShopCategories } from '@/apis/ShopCategoriesAPI';
+import { getShopProducts } from '@/apis/ShopProductsAPI';
 import ProductsList from './Products/ProductsList';
 
 const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#35d07f';
@@ -23,17 +25,17 @@ export default function MenuPage() {
     const [search, setSearch] = useState('');
     const [activeCategory, setActiveCategory] = useState<number | 'All'>('All');
 
-    const [categories, setCategories] = useState<Category[]>([]);
+    const [categories, setCategories] = useState<ShopCategoryItem[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const router = useRouter();
 
     useEffect(() => {
         const fetchProducts = async () => {
-            const allProducts = await getProducts();
+            const allProducts = await getShopProducts();
             setProducts(allProducts);
         };
         const fetchCategories = async () => {
-            const allCategories = await getCategories();
+            const allCategories = await getShopCategories();
             setCategories(allCategories);
         };
         fetchProducts();
@@ -92,7 +94,7 @@ export default function MenuPage() {
                         activeOpacity={0.8}
                     >
                         <Text style={[styles.pillText, activeCategory === cat.id && styles.pillTextActive]}>
-                            {cat.categoryName}
+                            {cat.name}
                         </Text>
                     </TouchableOpacity>
                 ))}

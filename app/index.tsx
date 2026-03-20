@@ -16,7 +16,7 @@ export default function Index() {
     return <Redirect href="/loginPage" />;
   }
 
-  if (auth.user?.role === 'SHOP_OWNER') {
+  if (auth.user?.role === 'SHOPOWNER') {
     return <Redirect href="/(tabs)/Home" />;
   }
 
