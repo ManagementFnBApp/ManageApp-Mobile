@@ -1,7 +1,7 @@
 import { MenuItem } from "@/apis/ProductsAPI";
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#35d07f';
+const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#2596BE';
 
 type Props = {
     rows: MenuItem[][],
@@ -62,7 +62,7 @@ export default function ProductsList({rows, cart, updateCart}: Props) {
     )
 }
 
-const formatPrice = (p: number) => p.toLocaleString("vi-VN") + ".000 VND";
+const formatPrice = (p: number) => p.toLocaleString("vi-VN") + " VND";
 
 const styles = StyleSheet.create({
     listContent: {

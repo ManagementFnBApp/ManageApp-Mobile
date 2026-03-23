@@ -12,7 +12,7 @@ import * as authApi from '@/apis/auth';
 import ErrorPopup from '@/components/Notifications/Error';
 
 
-const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#35d07f";
+const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#2596BE";
 
 interface RegisterProps {
     loading: boolean;

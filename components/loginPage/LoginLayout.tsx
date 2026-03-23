@@ -23,7 +23,7 @@ import { useRouter } from 'expo-router';
 import ErrorPopup from '../Notifications/Error';
 
 
-const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#35d07f";
+const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#2596BE";
 const { width } = Dimensions.get('window');
 
 type Tab = 'login' | 'register';
@@ -121,7 +121,7 @@ export default function LoginPage() {
         >
           <SafeAreaView style={styles.headerContent}>
             <View style={styles.logoContainer}>
-              <Text style={styles.logoText}>FnB Manager</Text>
+              <Text style={styles.logoText}>LumioViet</Text>
               <View style={styles.welcomeContainer}>
                 <Text style={styles.welcomeTitle}>
                   {activeTab === 'login' ? 'Welcome Back' : 'Get Started'}

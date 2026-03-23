@@ -21,7 +21,7 @@ type CartItem = {
 
 const TAX_RATE = 0.1;
 
-const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#35d07f";
+const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#2596BE";
 
 export default function Payment() {
     const router = useRouter()

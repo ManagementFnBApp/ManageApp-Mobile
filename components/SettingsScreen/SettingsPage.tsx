@@ -14,7 +14,7 @@ import {
     View
 } from 'react-native';
 
-const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#35d07f';
+const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#2596BE';
 const BG = '#f7f8fa';
 const CARD = '#ffffff';
 const BORDER = '#e8eaed';

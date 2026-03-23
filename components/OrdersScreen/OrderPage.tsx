@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import ProductsList from "./Products/ProductsList";
 
-const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#35d07f";
+const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#2596BE";
 
 export default function OrderPage() {
     const router = useRouter();

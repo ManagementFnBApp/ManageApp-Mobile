@@ -9,7 +9,7 @@ export default function Loading({ visible }: Props) {
 
   return (
     <View style={styles.overlay}>
-      <ActivityIndicator size="large" color="#35d07f" />
+      <ActivityIndicator size="large" color="#2596BE" />
     </View>
   );
 }

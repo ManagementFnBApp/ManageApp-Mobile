@@ -13,7 +13,7 @@ import { ACTIVE_STATUSES, FilterTab, getAllOrders, Order, STATUS_COLORS } from '
 import { router } from "expo-router";
 import { ArrowLeft, Bell } from "lucide-react-native";
 
-const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#35d07f";
+const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#2596BE";
 
 export default function OrdersHistory() {
   const [search, setSearch] = useState("");

@@ -104,12 +104,10 @@ export const registerShopSubscription = async (
   subscriptionId: number,
   shopName?: string,
 ): Promise<ShopSubscription> => {
-  console.log('1.2')
   const response = await apiClient.post('/subscriptions/shops', {
     subscription_id: subscriptionId,
     shop_name: shopName ?? 'My Shop',
   });
-  console.log('1.5')
   const raw = unwrap<Record<string, unknown>>(response.data);
   return raw as unknown as ShopSubscription;
 };

@@ -209,7 +209,7 @@ const AllStaffPage: React.FC = () => {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const PRIMARY          = '#35d07f';
+const PRIMARY          = '#2596BE';
 const TEXT_DARK        = '#1a1a2e';
 const TEXT_MID         = '#6b7280';
 const TEXT_PLACEHOLDER = '#b0b8c4';

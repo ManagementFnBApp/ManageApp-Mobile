@@ -24,7 +24,7 @@ import {
 } from '@/apis/ShopProductsAPI';
 import MenuHeader from './Components/MenuHeader';
 
-const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#35d07f';
+const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#2596BE';
 
 export type DetailProductParams = {
     PDid?: string;

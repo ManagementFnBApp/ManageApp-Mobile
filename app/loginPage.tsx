@@ -7,7 +7,7 @@ import {
 import LoginLayout from '@/components/loginPage/LoginLayout';
 
 
-const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#35d07f";
+const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#2596BE";
 
 const { width } = Dimensions.get('window');
 

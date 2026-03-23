@@ -19,7 +19,7 @@ import {
   View
 } from 'react-native';
 
-const GREEN = '#35d07f';
+const GREEN = '#2596BE';
 const BG = '#f7f8fa';
 const CARD_BG = '#ffffff';
 const BORDER = '#e8eaed';
@@ -33,7 +33,7 @@ export default function SubscriptionPage() {
   const router = useRouter();
 
   const isLoggedIn = !!auth?.token;
-  const isShopOwner = auth?.user?.role === 'SHOP_OWNER';
+  const isShopOwner = auth?.user?.role === 'SHOPOWNER';
 
   const handleSelectPlan = (plan: SubscriptionPlan) => {
     if (!isLoggedIn) {
@@ -155,7 +155,7 @@ export default function SubscriptionPage() {
         )}
 
         {/* Addons */}
-        <View style={styles.addonsSection}>
+        {/* <View style={styles.addonsSection}>
           <Text style={styles.addonsTitle}>Dịch vụ bổ sung</Text>
           {[
             { name: 'Website bán hàng', price: '299.000đ/tháng', desc: 'Website riêng với tên miền của bạn' },
@@ -171,10 +171,10 @@ export default function SubscriptionPage() {
               <Text style={styles.addonPrice}>{addon.price}</Text>
             </View>
           ))}
-        </View>
+        </View> */}
 
         {/* CTA */}
-        <View style={styles.cta}>
+        {/* <View style={styles.cta}>
           <Text style={styles.ctaTitle}>Bắt đầu ngay hôm nay</Text>
           <TouchableOpacity
             style={styles.ctaButton}
@@ -185,7 +185,7 @@ export default function SubscriptionPage() {
               {isLoggedIn ? 'Vào hệ thống' : 'Đăng ký miễn phí'}
             </Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
       </ScrollView>
     </SafeAreaView>
   );

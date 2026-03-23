@@ -14,12 +14,12 @@ import {
 } from 'react-native';
 
 //import { Category } from '@/apis/CategoriesAPI';
-import { Product } from '@/apis/ProductsAPI';
-import { ShopCategoryItem, getShopCategories } from '@/apis/ShopCategoriesAPI';
+import { getProducts, Product } from '@/apis/ProductsAPI';
+import { getShopCategories, ShopCategoryItem } from '@/apis/ShopCategoriesAPI';
 import { getShopProducts } from '@/apis/ShopProductsAPI';
 import ProductsList from './Products/ProductsList';
 
-const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#35d07f';
+const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#2596BE';
 
 export default function MenuPage() {
     const [search, setSearch] = useState('');
@@ -31,8 +31,9 @@ export default function MenuPage() {
 
     useEffect(() => {
         const fetchProducts = async () => {
-            const allProducts = await getShopProducts();
-            setProducts(allProducts);
+            const allShopProducts = await getShopProducts();
+            const allProducts = await getProducts();
+            setProducts([...allProducts, ...allShopProducts]);
         };
         const fetchCategories = async () => {
             const allCategories = await getShopCategories();

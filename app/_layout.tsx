@@ -45,7 +45,7 @@ function RootNav() {
         </Stack>
       ) : (
         <>
-          {(auth.user?.role !== null && auth.user?.role === "SHOP_OWNER" && !auth?.loading && !subscription?.loading) ? (
+          {((auth.user?.role !== undefined && auth.user?.role === "SHOPOWNER") || !auth?.loading || !subscription?.loading) ? (
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(tabs)" />
             </Stack>

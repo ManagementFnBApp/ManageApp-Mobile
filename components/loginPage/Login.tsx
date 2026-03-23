@@ -11,7 +11,7 @@ import {
 
 
 
-const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#35d07f";
+const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#2596BE";
 const { width } = Dimensions.get('window');
 
 export default function Login({ loading, setLoading, handleLogin }: { loading: boolean; setLoading: React.Dispatch<React.SetStateAction<boolean>>; handleLogin: (username: string, password: string) => void }) {

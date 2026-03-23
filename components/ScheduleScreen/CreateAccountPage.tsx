@@ -255,7 +255,7 @@ const CreateAccountPage: React.FC = () => {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const PRIMARY          = '#35d07f';
+const PRIMARY          = '#2596BE';
 const PRIMARY_LIGHT    = '#e8faf1';
 const PRIMARY_BORDER   = '#b7efd4';
 const TEXT_DARK        = '#1a1a2e';

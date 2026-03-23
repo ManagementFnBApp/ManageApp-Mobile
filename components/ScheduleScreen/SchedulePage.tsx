@@ -87,7 +87,7 @@ const SchedulePage: React.FC = () => {
                 activeOpacity={0.7}
                 onPress={() => router.push('/Schedule/allStaff')}
                 >
-                    <UserCog size={20} color="#35d07f" strokeWidth={2} />
+                    <UserCog size={20} color="#2596BE" strokeWidth={2} />
                 </TouchableOpacity>
             </View>
 
@@ -158,7 +158,7 @@ const SchedulePage: React.FC = () => {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const PRIMARY = '#35d07f';
+const PRIMARY = '#2596BE';
 const SURFACE = '#f7f8fa';
 const TEXT_DARK = '#1a1a2e';
 const TEXT_MID = '#6b7280';

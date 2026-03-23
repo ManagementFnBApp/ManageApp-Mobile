@@ -8,7 +8,7 @@ import {
     View,
 } from 'react-native';
 
-const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#35d07f";
+const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#2596BE";
 
 interface ErrorPopupProps {
     message: string | null;

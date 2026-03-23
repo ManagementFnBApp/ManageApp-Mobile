@@ -9,7 +9,7 @@ import {
     View,
 } from 'react-native';
 
-const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#35d07f';
+const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#2596BE';
 
 interface ProductCardProps {
     item: Product;
@@ -56,7 +56,7 @@ export default function ProductCard({ item, index }: ProductCardProps) {
             </View>
             <View style={styles.info}>
                 <Text style={styles.name}>{item.productName}</Text>
-                <Text style={styles.price}>{item.listPrice}.000 VND</Text>
+                <Text style={styles.price}>{item.listPrice} VND</Text>
                 <View style={styles.stockRow}>
                     <View style={[styles.dot, { backgroundColor: inStock ? GREEN : '#e74c3c' }]} />
                     <Text style={[styles.stockText, { color: inStock ? GREEN : '#e74c3c' }]}>
