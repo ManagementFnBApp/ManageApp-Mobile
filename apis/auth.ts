@@ -37,38 +37,38 @@ export const login = async (data: LoginDto): Promise<LoginResponse> => {
   const isEmail = data.username.includes('@');
 
   // Admin login via plain fetch to bypass axios interceptor
-  if (isEmail) {
-    try {
-      const res = await fetch(`${BASE_URL}/admins/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: data.username, password: data.password }),
-      });
+  // if (isEmail) {
+  //   try {
+  //     const res = await fetch(`${BASE_URL}/admins/login`, {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ email: data.username, password: data.password }),
+  //     });
 
-      if (res.ok) {
-        const json = await res.json();
-        const adminData = json.data ?? json;
+  //     if (res.ok) {
+  //       const json = await res.json();
+  //       const adminData = json.data ?? json;
 
-        if (adminData?.token) {
-          await storage.set('accessToken', adminData.token);
-          await storage.set('userId', String(adminData.adminId));
-          await storage.set('username', data.username);
-          await storage.set('role', 'admin');
-        }
+  //       if (adminData?.token) {
+  //         await storage.set('accessToken', adminData.token);
+  //         await storage.set('userId', String(adminData.adminId));
+  //         await storage.set('username', data.username);
+  //         await storage.set('role', 'admin');
+  //       }
 
-        return {
-          user_id: adminData.adminId,
-          username: data.username,
-          token: adminData.token,
-          expiredTime: adminData.expiredTime,
-          role: 'admin',
-        };
-      }
-      // Admin login failed → fall through to staff login
-    } catch {
-      // Network error → fall through to staff login
-    }
-  }
+  //       return {
+  //         user_id: adminData.adminId,
+  //         username: data.username,
+  //         token: adminData.token,
+  //         expiredTime: adminData.expiredTime,
+  //         role: 'admin',
+  //       };
+  //     }
+  //     // Admin login failed → fall through to staff login
+  //   } catch {
+  //     // Network error → fall through to staff login
+  //   }
+  // }
 
   // Staff / user login
   const response = await apiClient.post<

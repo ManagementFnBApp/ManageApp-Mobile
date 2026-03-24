@@ -1,34 +1,73 @@
 import DetailProductPage, { DetailProductParams } from "@/components/MenuScreen/EditProductPage";
 import { useLocalSearchParams } from 'expo-router';
 
+type ProductRouteParams = {
+  PDid?: string;
+  PDname?: string;
+  PDbarcode?: string;
+  PDprice?: string;
+
+  PDimportPrice?: string;
+  PDlistPrice?: string;
+  PDcategory?: string;
+  PDcategoryId?: string;
+  PDdescription?: string;
+
+  PDinStock?: string;
+  PDisActive?: string;
+  PDimage?: string;
+  PDmeasureUnit?: string;
+  PDcategoryOpen?: string;
+};
+
+// export type DetailProductParams = {
+//     // Core (required)
+//     PDid?: string;
+//     PDname?: string;
+//     PDbarcode?: string;
+//     PDprice?: number;
+    
+//     // ✅ New from handlePress
+//     PDimportPrice?: number;
+//     PDcategory?: string;
+//     PDcategoryId?: string;
+//     PDdescription?: string;
+
+//     PDinStock?: boolean;
+//     PDimage?: string;
+//     PDmeasureUnit?: string;
+//     PDisActive?: boolean;
+// };
+
 export default function EditProduct() {
-    const params = useLocalSearchParams();
+    const params = useLocalSearchParams<ProductRouteParams>();
 
-    // derive product directly from params (support both prefixed PD* keys and non-prefixed keys)
-    const product: DetailProductParams | undefined = params
-        ? (() => {
-              const pDid = (params.PDid ?? params.id) as string | undefined;
-              const pName = (params.PDname ?? params.name) as string | undefined;
-              const pPriceRaw = (params.PDprice ?? params.price) as string | undefined;
-              const pCategory = (params.PDcategory ?? params.category) as string | undefined;
-              const pDescription = (params.PDdescription ?? params.description) as string | undefined;
-              const pInStockRaw = (params.PDinStock ?? params.inStock) as string | undefined;
-              const pCategoryOpenRaw = (params.PDcategoryOpen ?? params.categoryOpen) as string | undefined;
+    // ✅ Complete param parsing with ALL fields
+    const product: DetailProductParams = {
+        // Core fields (required)
+        PDid: (params.PDid) as string | undefined,
+        PDname: (params.PDname ?? params.PDname) as string | undefined,
+        PDbarcode: (params.PDbarcode ?? params.PDbarcode) as string | undefined,
 
-              return {
-                  PDid: pDid,
-                  PDname: pName,
-                  PDprice: pPriceRaw ? Number(pPriceRaw) : undefined,
-                  PDcategory: pCategory,
-                  PDdescription: pDescription,
-                  PDinStock: pInStockRaw === 'true' ? true : pInStockRaw === 'false' ? false : undefined,
-                  PDcategoryOpen: pCategoryOpenRaw === 'true',
-              };
-          })()
-        : undefined;
+        PDimportPrice: params.PDimportPrice ? Number(params.PDimportPrice) : undefined,
+        PDlistPrice: params.PDlistPrice ? Number(params.PDlistPrice) : undefined,
+        
+        // ✅ New fields from handlePress
+        PDcategory: (params.PDcategory ?? params.PDcategory) as string | undefined,
+        PDcategoryId: (params.PDcategoryId ?? params.PDcategoryId) as string | undefined,
+        PDdescription: (params.PDdescription ?? params.PDdescription) as string | undefined,
+        PDisActive: Boolean(params.PDisActive) || true,
+        PDimage: (params.PDimage) as string | undefined,
+        PDmeasureUnit: (params.PDmeasureUnit) as string | undefined,
+    };
 
-    //console.log('EditProduct received params:', params);
+    // Debug log (remove in production)
+    console.log('📋 EditProduct params:', {
+        hasProductId: !!product.PDid,
+        productName: product.PDname,
+        hasBarcode: !!product.PDbarcode,
+        category: product.PDcategory,
+    });
 
-    // DetailProductPage can handle undefined/null props itself
     return <DetailProductPage {...product} />;
 }

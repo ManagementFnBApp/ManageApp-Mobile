@@ -109,6 +109,7 @@ export default function CheckoutPage() {
             // Step 3: Confirm → activates shop + upgrades role
             await confirmPayment(payment.sub_payment_id);
 
+            await auth.logout();
             setFinalShopName(payment.shop?.shop_name || shopName.trim());
             setStep('success');
         } catch (err: any) {

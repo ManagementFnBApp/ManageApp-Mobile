@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-export default function MenuHeader({ editMode }: { editMode: boolean }) {
+export default function MenuHeader({ editMode, title }: { editMode: boolean, title: string }) {
     const router = useRouter();
     return (
         <View style={styles.header}>

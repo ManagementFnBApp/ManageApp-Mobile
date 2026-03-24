@@ -48,7 +48,7 @@ export default function MenuPage() {
         fetchProducts();
         fetchCategories();
         setLoading(false)
-    }, []);
+    }, [products, categories]);
 
     const filtered = products.filter(item => {
         const matchCategory = activeCategory === 'All' || item.categoryId === activeCategory;
@@ -111,7 +111,6 @@ export default function MenuPage() {
             {/* Product Grid */}
             <View style={styles.list}>
                 <ProductsList items={filtered} />
-                <Loading visible={loading} />
             </View>
 
             {/* FAB */}
@@ -122,6 +121,7 @@ export default function MenuPage() {
             >
                 <ClipboardPlus size={28} color="#fff" />
             </TouchableOpacity>
+            <Loading visible={loading} />
         </SafeAreaView>
     );
 }

@@ -33,6 +33,7 @@ export default function ProductsList({ items }: ProductsListProps) {
                 </View>
             }
         />
+        
     );
 }
 

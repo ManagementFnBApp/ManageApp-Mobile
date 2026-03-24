@@ -63,7 +63,7 @@ export const getMyShiftAssignmentsAsOwner = async (
   userId: any,
 ): Promise<ShiftAssignment[]> => {
   const allShifts = await getShiftAssignments();
-  return allShifts.filter((s) => s.user_id === userId);
+  return allShifts.filter((s) => s.user_id !== userId);
 };
 
 export const getMyShiftAssignmentsAsStaff = async (

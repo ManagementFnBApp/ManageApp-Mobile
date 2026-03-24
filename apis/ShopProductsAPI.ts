@@ -1,6 +1,5 @@
 import { apiClient } from "@/configs/axios";
 import type { Product } from "./ProductsAPI";
-
 /**
  * API cho /shop-products — SHOPOWNER tạo/quản lý sản phẩm riêng của shop.
  * Backend lấy shop_id từ JWT tự động, không cần gửi trong body.
@@ -60,9 +59,27 @@ function unwrap<T>(raw: unknown): T {
   return raw as T;
 }
 
-function toNumber(value: unknown, fallback = 0): number {
+function toNumber(value: unknown): number {
+  if (value == null) return 0;
+
+  // Handle Prisma Decimal format: { s: 1, e: 4, d: [29000] }
+  if (typeof value === 'object' && value !== null) {
+    const obj = value as any;
+    if (Array.isArray(obj.d) && obj.d.length > 0) {
+      const sign = obj.s === -1 ? -1 : 1;
+      return sign * (obj.d[0] || 0);
+    }
+  }
+
+  // Handle Prisma Decimal with $numberDecimal
+  if (typeof value === 'object' && value !== null && '$numberDecimal' in (value as object)) {
+    return Number((value as any).$numberDecimal);
+  }
+
+  const obj = value as { toNumber?: () => number };
+  if (typeof obj?.toNumber === 'function') return obj.toNumber();
   const n = Number(value);
-  return Number.isFinite(n) ? n : fallback;
+  return Number.isNaN(n) ? 0 : n;
 }
 
 /**
@@ -135,30 +152,46 @@ export const getActiveShopProducts = async (): Promise<Product[]> =>
  * 'image' là file bắt buộc — backend sẽ lỗi nếu thiếu file.path.
  */
 export const createShopProduct = async (
-  payload: CreateShopProductPayload
+  payload: CreateShopProductPayload,
 ): Promise<Product> => {
   const form = new FormData();
-
-  // Append image file — required by backend (file.path is used, not optional)
-  form.append("image", {
-    uri: payload.image.uri,
+  
+  // ✅ 1. DTO validation - send filename as STRING (exactly like web)
+  form.append("image", payload.image.name);
+  
+  // ✅ 2. Multer file - create REAL File-like object
+  const rnFile = {
+    uri: payload.image.uri.startsWith('file://') 
+      ? payload.image.uri 
+      : `file://${payload.image.uri}`,
+    type: payload.image.type || 'image/jpeg',
     name: payload.image.name,
-    type: payload.image.type,
-  } as unknown as Blob);
+  };
 
+  // ✅ 3. Append with proper React Native + Multer format
+  form.append('image', rnFile as any);
+
+  // ✅ Rest exactly like web
   form.append("categoryId", String(payload.categoryId));
   form.append("productName", payload.productName.trim());
   form.append("listPrice", String(payload.listPrice));
   form.append("importPrice", String(payload.importPrice));
-  form.append("isActive", String(payload.isActive ?? true));
+  form.append("barcode", payload.barcode?.trim() || "");
 
-  if (payload.barcode?.trim()) form.append("barcode", payload.barcode.trim() || '');
   if (payload.description?.trim()) form.append("description", payload.description.trim());
   if (payload.measureUnit?.trim()) form.append("measureUnit", payload.measureUnit.trim());
 
-  const res = await apiClient.post("/shop-products", form);
-  const raw = unwrap<Record<string, unknown>>(res.data);
-  return mapShopProduct(raw ?? {});
+  console.log('📤 FormData ready - image parts:', form.getAll('image').length);
+
+  const res = await apiClient.post("/shop-products", form, {
+    headers: { 
+      'Content-Type': 'multipart/form-data',
+      // ✅ Add this if needed
+      // 'Accept': '*/*',
+    },
+  });
+
+  return mapShopProduct(unwrap(res.data) ?? {});
 };
 
 /**
@@ -171,28 +204,52 @@ export const updateShopProduct = async (
   payload: UpdateShopProductPayload
 ): Promise<Product> => {
   const form = new FormData();
+  console.log('upd:', payload)
 
-  // Append image only if provided (backend uses file?.path — optional)
+  // ✅ Image: Send 2 parts ONLY if new image (exactly like create)
   if (payload.image) {
+    // 1. Text part FIRST (DTO validation)
+    form.append("image", payload.image.name);
+    
+    // 2. File part SECOND (Multer) - EXACT createShopProduct format
     form.append("image", {
       uri: payload.image.uri,
       name: payload.image.name,
       type: payload.image.type,
-    } as unknown as Blob);
+    } as unknown as File); // ✅ as File (matches create)
   }
 
-  if (payload.categoryId !== undefined) form.append("categoryId", String(payload.categoryId));
-  if (payload.productName !== undefined) form.append("productName", payload.productName.trim());
-  if (payload.listPrice !== undefined) form.append("listPrice", String(payload.listPrice));
-  if (payload.importPrice !== undefined) form.append("importPrice", String(payload.importPrice));
-  if (payload.isActive !== undefined) form.append("isActive", String(payload.isActive));
-  if (payload.barcode !== undefined) form.append("barcode", payload.barcode.trim());
-  if (payload.description !== undefined) form.append("description", payload.description.trim());
-  if (payload.measureUnit !== undefined) form.append("measureUnit", payload.measureUnit.trim());
+  // ✅ Syntax fix + conditional fields (only send if changed)
+  if (payload.productName !== undefined && payload.productName.trim()) {
+    form.append("productName", payload.productName.trim());
+  }
+  
+  if (payload.listPrice !== undefined) {
+    form.append("listPrice", String(payload.listPrice));
+  }
+  
+  if (payload.importPrice !== undefined) {
+    form.append("importPrice", String(payload.importPrice));
+  }
+  
+  // ✅ Barcode always sent (even empty string)
+  if (payload.barcode !== undefined) {
+    form.append("barcode", payload.barcode.trim());
+  }
+  
+  // ✅ Optional fields only if have value
+  if (payload.description !== undefined && payload.description.trim()) {
+    form.append("description", payload.description.trim());
+  }
+  
+  // if (payload.measureUnit !== undefined && payload.measureUnit.trim()) {
+    form.append("measureUnit", 'ly');
+  // }
 
-  const res = await apiClient.patch(`/shop-products/${id}`, form, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  // ✅ NO categoryId/isActive (matches web + create logic)
+
+  const res = await apiClient.patch(`/shop-products/${id}`, form);
+  
   const raw = unwrap<Record<string, unknown>>(res.data);
   return mapShopProduct(raw ?? {});
 };

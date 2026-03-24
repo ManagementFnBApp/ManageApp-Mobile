@@ -1,4 +1,4 @@
-import { Role, ShiftTab } from '@/apis/ScheduleAPI';
+import { createManagedUser } from '@/apis/adminAPI';
 import { useRouter } from 'expo-router';
 import {
     ArrowLeft,
@@ -23,22 +23,32 @@ import {
     View,
 } from 'react-native';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface ShiftOption {
-    key: ShiftTab;
-    label: string;
-    time: string;
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const SHIFTS: ShiftOption[] = [
-    { key: 'Morning',   label: 'Morning',   time: '06:00 - 12:00' },
-    { key: 'Afternoon', label: 'Afternoon', time: '12:00 - 18:00' },
-    { key: 'Night',     label: 'Night',     time: '18:00 - 00:00' },
-    { key: 'Midnight',  label: 'Midnight',  time: '00:00 - 06:00' },
-];
+const getErrorMessage = (e: unknown): string => {
+    const err = e as {
+      message?: string;
+      originalError?: {
+        code?: string;
+        message?: string;
+        response?: { data?: { message?: string | string[] } };
+      };
+      response?: { data?: { message?: string | string[] } };
+    };
+    const msg = err?.message ?? err?.originalError?.message;
+    if (
+      msg === "Network Error" ||
+      err?.originalError?.code === "ERR_NETWORK" ||
+      (typeof msg === "string" &&
+        (msg.includes("CORS") || msg.includes("blocked")))
+    ) {
+      return "Không thể kết nối tới server. Backend (localhost:2999) cần cấu hình CORS cho phép method PATCH.";
+    }
+    if (typeof msg === "string" && msg.trim()) return msg;
+    const data = err?.response?.data ?? err?.originalError?.response?.data;
+    const apiMsg = data?.message;
+    if (Array.isArray(apiMsg)) return apiMsg.join(", ");
+    if (typeof apiMsg === "string") return apiMsg;
+    return "Đã xảy ra lỗi. Vui lòng thử lại.";
+  };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -77,7 +87,7 @@ const InputField: React.FC<{
 );
 
 const RoleButton: React.FC<{
-    role: Role;
+    role: any;
     selected: boolean;
     onPress: () => void;
 }> = ({ role, selected, onPress }) => (
@@ -107,72 +117,92 @@ const RoleButton: React.FC<{
     </TouchableOpacity>
 );
 
-const ShiftCard: React.FC<{
-    shift: ShiftOption;
-    selected: boolean;
-    onPress: () => void;
-}> = ({ shift, selected, onPress }) => (
-    <TouchableOpacity
-        style={[styles.shiftCard, selected && styles.shiftCardActive]}
-        onPress={onPress}
-        activeOpacity={0.8}
-    >
-        <View style={[styles.checkbox, selected && styles.checkboxActive]}>
-            {selected && <View style={styles.checkboxInner} />}
-        </View>
-        <View style={styles.shiftInfo}>
-            <Text style={[styles.shiftLabel, selected && styles.shiftLabelActive]}>
-                {shift.label}
-            </Text>
-            <Text style={[styles.shiftTime, selected && styles.shiftTimeActive]}>
-                {shift.time}
-            </Text>
-        </View>
-    </TouchableOpacity>
-);
-
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 const CreateAccountPage: React.FC = () => {
-    const [fullName, setFullName]             = useState('');
-    const [email, setEmail]                   = useState('');
-    const [password, setPassword]             = useState('');
-    const [showPassword, setShowPassword]     = useState(false);
-    const [role, setRole]                     = useState<Role>('STAFF');
-    const [selectedShifts, setSelectedShifts] = useState<Set<ShiftTab>>(new Set(['Morning']));
+    // ✅ Added missing state variables
+    const [fullName, setFullName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState(''); // ✅ Added
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false); // ✅ Added
+    const [role, setRole] = useState<'STAFF' | 'SHOPOWNER'>('STAFF');
+    const [submitting, setSubmitting] = useState(false); // ✅ Added
+    const [success, setSuccess] = useState(''); // ✅ Added
+    const [formError, setFormError] = useState(''); // ✅ Added
 
     const router = useRouter();
 
-    const toggleShift = (key: ShiftTab) => {
-        setSelectedShifts(prev => {
-            const next = new Set(prev);
-            next.has(key) ? next.delete(key) : next.add(key);
-            return next;
-        });
-    };
-
     // ─── Validation ────────────────────────────────────────────────────────
     const validate = (): string | null => {
-        if (!fullName.trim())   return 'Full name is required.';
-        if (!email.trim())      return 'Email or username is required.';
+        if (!fullName.trim()) return 'Full name is required.';
+        if (!email.trim()) return 'Email or username is required.';
         if (password.length < 6) return 'Password must be at least 6 characters.';
-        if (selectedShifts.size === 0) return 'Please select at least one shift.';
+        if (password !== confirmPassword) return 'Password confirmation does not match.';
         return null;
     };
 
-    const handleCreate = () => {
+    const handleCreate = async () => {
         const error = validate();
         if (error) {
             Alert.alert('Validation Error', error);
             return;
         }
-        // TODO: wire up to API
-        console.log({ fullName, email, password, role, shifts: Array.from(selectedShifts) });
-        router.back();
+
+        setSubmitting(true);
+        setFormError('');
+
+        try {
+            const result = await createManagedUser({
+                email: email.trim(),
+                username: fullName.trim(),
+                password: password,
+                role_code: role,
+            });
+
+            // Reset form
+            setFullName('');
+            setEmail('');
+            setPassword('');
+            setConfirmPassword('');
+            setRole('STAFF');
+
+            setSuccess('Tài khoản đã tạo. Thông tin đăng nhập đã được gửi đến email của người dùng.');
+
+            // Navigate to allStaff screen
+            router.push('/Schedule/allStaff');
+
+            // Clear success message
+            setTimeout(() => setSuccess(''), 5000);
+
+        } catch (e: unknown) {
+            const err = e as any;
+            const errorMsg = getErrorMessage(e);
+
+            console.error('Create managed user error:', {
+                status: err?.status,
+                message: err?.message,
+                originalError: err?.originalError,
+            });
+
+            if (err?.status === 401) {
+                Alert.alert(
+                    'Lỗi xác thực',
+                    'Bạn không đủ quyền hoặc phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.'
+                );
+            } else if (err?.status === 400) {
+                Alert.alert('Lỗi', `Lỗi: ${errorMsg}`);
+            } else {
+                Alert.alert('Lỗi', errorMsg);
+            }
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const handleCancel = () => {
-        router.back(); // ✅ was missing onPress
+        router.push('/Schedule/allStaff');
     };
 
     return (
@@ -184,7 +214,7 @@ const CreateAccountPage: React.FC = () => {
                 <TouchableOpacity
                     style={styles.backBtn}
                     activeOpacity={0.7}
-                    onPress={() => router.back()} // ✅ was missing onPress
+                    onPress={() => router.push('/Schedule/allStaff')}
                 >
                     <ArrowLeft size={20} color={TEXT_DARK} strokeWidth={2.5} />
                 </TouchableOpacity>
@@ -194,7 +224,7 @@ const CreateAccountPage: React.FC = () => {
 
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'} // ✅ Fixed incomplete syntax
             >
                 <ScrollView
                     style={styles.scroll}
@@ -228,7 +258,23 @@ const CreateAccountPage: React.FC = () => {
                             <Pressable onPress={() => setShowPassword(p => !p)} hitSlop={8}>
                                 {showPassword
                                     ? <EyeOff size={18} color={TEXT_PLACEHOLDER} strokeWidth={1.8} />
-                                    : <Eye    size={18} color={TEXT_PLACEHOLDER} strokeWidth={1.8} />
+                                    : <Eye size={18} color={TEXT_PLACEHOLDER} strokeWidth={1.8} />
+                                }
+                            </Pressable>
+                        }
+                    />
+                    {/* ✅ Added Confirm Password field */}
+                    <InputField
+                        label="Confirm Password"
+                        placeholder="Confirm your password"
+                        value={confirmPassword}
+                        onChangeText={setConfirmPassword}
+                        secureTextEntry={!showConfirmPassword}
+                        rightIcon={
+                            <Pressable onPress={() => setShowConfirmPassword(p => !p)} hitSlop={8}>
+                                {showConfirmPassword
+                                    ? <EyeOff size={18} color={TEXT_PLACEHOLDER} strokeWidth={1.8} />
+                                    : <Eye size={18} color={TEXT_PLACEHOLDER} strokeWidth={1.8} />
                                 }
                             </Pressable>
                         }
@@ -237,12 +283,12 @@ const CreateAccountPage: React.FC = () => {
                     {/* ── Role ── */}
                     <SectionTitle title="Role" />
                     <View style={styles.roleRow}>
-                        <RoleButton role="STAFF"     selected={role === 'STAFF'}     onPress={() => setRole('STAFF')} />
+                        <RoleButton role="STAFF" selected={role === 'STAFF'} onPress={() => setRole('STAFF')} />
                         <RoleButton role="SHOPOWNER" selected={role === 'SHOPOWNER'} onPress={() => setRole('SHOPOWNER')} />
                     </View>
 
                     {/* ── Shift Assignment ── */}
-                    <SectionTitle
+                    {/* <SectionTitle
                         title="Shift Assignment"
                         subtitle="Select one or more shifts for this member"
                     />
@@ -255,7 +301,18 @@ const CreateAccountPage: React.FC = () => {
                                 onPress={() => toggleShift(shift.key)}
                             />
                         ))}
-                    </View>
+                    </View> */}
+
+                    {/* ✅ Show error/success messages */}
+                    {formError ? (
+                        <View style={styles.errorContainer}>
+                            <Text style={styles.errorText}>{formError}</Text>
+                        </View>
+                    ) : success ? (
+                        <View style={styles.successContainer}>
+                            <Text style={styles.successText}>{success}</Text>
+                        </View>
+                    ) : null}
 
                     <View style={{ height: 100 }} />
                 </ScrollView>
@@ -266,12 +323,22 @@ const CreateAccountPage: React.FC = () => {
                 <TouchableOpacity
                     style={styles.cancelBtn}
                     activeOpacity={0.7}
-                    onPress={handleCancel} // ✅ was missing onPress
+                    onPress={handleCancel}
                 >
                     <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.createBtn} onPress={handleCreate} activeOpacity={0.85}>
-                    <Text style={styles.createText}>Create Account</Text>
+                <TouchableOpacity
+                    style={[
+                        styles.createBtn,
+                        submitting && styles.createBtnDisabled
+                    ]}
+                    onPress={handleCreate}
+                    activeOpacity={submitting ? 1 : 0.85}
+                    disabled={submitting}
+                >
+                    <Text style={styles.createText}>
+                        {submitting ? 'Creating...' : 'Create Account'}
+                    </Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
@@ -280,13 +347,13 @@ const CreateAccountPage: React.FC = () => {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const PRIMARY          = '#2596BE';
-const PRIMARY_LIGHT    = '#e8f6fb'; // ✅ fixed: was green-tinted, now matches blue PRIMARY
-const TEXT_DARK        = '#1a1a2e';
-const TEXT_MID         = '#6b7280';
+const PRIMARY = '#2596BE';
+const PRIMARY_LIGHT = '#e8f6fb';
+const TEXT_DARK = '#1a1a2e';
+const TEXT_MID = '#6b7280';
 const TEXT_PLACEHOLDER = '#b0b8c4';
-const BORDER           = '#efefef';
-const SURFACE          = '#f7f8fa';
+const BORDER = '#efefef';
+const SURFACE = '#f7f8fa';
 
 const styles = StyleSheet.create({
     safe: {
@@ -376,6 +443,36 @@ const styles = StyleSheet.create({
     },
     inputRight: {
         paddingLeft: 8,
+    },
+
+    // ✅ Added error/success styles
+    errorContainer: {
+        backgroundColor: '#fef2f2',
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 16,
+        borderLeftWidth: 4,
+        borderLeftColor: '#ef4444',
+    },
+    errorText: {
+        color: '#dc2626',
+        fontSize: 14,
+        fontWeight: '500',
+        lineHeight: 20,
+    },
+    successContainer: {
+        backgroundColor: '#f0fdf4',
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 16,
+        borderLeftWidth: 4,
+        borderLeftColor: '#10b981',
+    },
+    successText: {
+        color: '#059669',
+        fontSize: 14,
+        fontWeight: '500',
+        lineHeight: 20,
     },
 
     // Role
@@ -472,8 +569,6 @@ const styles = StyleSheet.create({
         color: PRIMARY,
         opacity: 0.8,
     },
-
-    // Footer
     footer: {
         position: 'absolute',
         bottom: 10,
@@ -515,6 +610,11 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 8,
         elevation: 4,
+    },
+    // ✅ Added disabled button style
+    createBtnDisabled: {
+        backgroundColor: '#9ca3af',
+        shadowOpacity: 0.1,
     },
     createText: {
         fontSize: 14,

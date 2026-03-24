@@ -1,4 +1,5 @@
-import { getAllStaffs, SHIFT_TABS, ShiftTab, StaffAccount } from "@/apis/ScheduleAPI";
+import { AppUser, getManagedUsers } from "@/apis/adminAPI";
+import { getShiftAssignments, ShiftAssignment } from "@/apis/ShiftAPI";
 import { useRouter } from "expo-router";
 import {
     UserCog,
@@ -7,6 +8,7 @@ import {
 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     Platform,
     SafeAreaView,
     ScrollView,
@@ -17,32 +19,59 @@ import {
     View
 } from 'react-native';
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+type ShiftTab = 'Morning' | 'Noon' | 'Afternoon' | 'Evening';
+const SHIFT_TABS: ShiftTab[] = ['Morning', 'Noon', 'Afternoon', 'Evening'];
+
+// Maps ShiftTab display names → backend shift_name values
+const SHIFT_NAME_MAP: Record<ShiftTab, string> = {
+    Morning: 'SÁNG',
+    Noon: 'TRƯA',
+    Afternoon: 'CHIỀU',
+    Evening: 'TỐI',
+};
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-const Avatar: React.FC<{ member: StaffAccount }> = ({ member }) => (
-    <View style={[styles.avatar, { backgroundColor: member.avatarColor }]}>
-        <Text style={styles.avatarInitials}>{member.initials}</Text>
-        {member.role === 'SHOPOWNER' && (
-            <View style={styles.managerBadge} />
-        )}
-    </View>
-);
+const Avatar: React.FC<{ member: AppUser }> = ({ member }) => {
+    const initials = (member.profile?.full_name || member.username || '?')
+        .split(' ')
+        .map((w: string) => w[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+
+    const colors = ['#b7e4c7', '#a9d6e5', '#f4d03f', '#f1948a', '#c39bd3'];
+    const color = colors[member.user_id % colors.length];
+
+    return (
+        <View style={[styles.avatar, { backgroundColor: color }]}>
+            <Text style={styles.avatarInitials}>{initials}</Text>
+            {member.role === 'SHOPOWNER' && (
+                <View style={styles.managerBadge} />
+            )}
+        </View>
+    );
+};
 
 const StaffCard: React.FC<{
-    member: StaffAccount;
+    member: AppUser;
     onUnassign: (id: string) => void;
 }> = ({ member, onUnassign }) => (
     <View style={styles.staffCard}>
         <View style={styles.staffLeft}>
             <Avatar member={member} />
             <View style={styles.staffInfo}>
-                <Text style={styles.staffName}>{member.fullName}</Text>
+                <Text style={styles.staffName}>
+                    {member.profile?.full_name || member.username}
+                </Text>
                 <Text style={styles.staffRole}>{member.role}</Text>
             </View>
         </View>
-        {/* <TouchableOpacity
+        {/* Unassign button — uncomment when ready
+        <TouchableOpacity
             style={styles.unassignBtn}
-            onPress={() => onUnassign(member.id)}
+            onPress={() => onUnassign(String(member.user_id))}
             activeOpacity={0.7}
         >
             <Text style={styles.unassignText}>Unassign</Text>
@@ -53,27 +82,60 @@ const StaffCard: React.FC<{
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 const SchedulePage: React.FC = () => {
-    const [staff, setStaff] = useState<Record<ShiftTab, StaffAccount[]> | null>(null);
+    const [staff, setStaff] = useState<AppUser[]>([]);
+    const [allShift, setAllShift] = useState<ShiftAssignment[]>([]);
     const [activeShift, setActiveShift] = useState<ShiftTab>('Morning');
-    const router = useRouter()
+    const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchStaff = async () => {
-            const allStaffs = await getAllStaffs();
+    const router = useRouter();
+
+    // ── Data fetching ──────────────────────────────────────────────────────────
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [allStaffs, allTheShift] = await Promise.all([
+                getManagedUsers(),
+                getShiftAssignments(),
+            ]);
             setStaff(allStaffs);
-        };
-        fetchStaff();
-    }, []); // empty deps — fetch once on mount only
-
-    const currentStaff: StaffAccount[] = staff?.[activeShift] ?? [];
-
-    const handleUnassign = (id: string) => {
-        if (!staff) return;
-        setStaff({
-            ...staff,
-            [activeShift]: staff[activeShift].filter(m => m.id !== id),
-        });
+            setAllShift(allTheShift);
+        } catch (err) {
+            console.warn('SchedulePage: failed to fetch data', err);
+        } finally {
+            setLoading(false);
+        }
     };
+
+    // ✅ Empty dependency array — fetch only on mount, not on every state change
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    // ── Derived data ───────────────────────────────────────────────────────────
+
+    // Get the shift assignments for the active tab, then resolve full AppUser objects
+    const currentStaff: AppUser[] = allShift
+        .filter(s => s.shift_name === SHIFT_NAME_MAP[activeShift])
+        .map(s => staff.find(u => u.user_id === s.user_id))
+        .filter((u): u is AppUser => Boolean(u));
+
+    // ── Handlers ───────────────────────────────────────────────────────────────
+
+    // Removes a shift assignment locally (optimistic update)
+    const handleUnassign = (userId: string) => {
+        setAllShift(prev =>
+            prev.filter(
+                s =>
+                    !(
+                        String(s.user_id) === userId &&
+                        s.shift_name === SHIFT_NAME_MAP[activeShift]
+                    )
+            )
+        );
+    };
+
+    // ── Render ─────────────────────────────────────────────────────────────────
 
     return (
         <SafeAreaView style={styles.safe}>
@@ -82,10 +144,10 @@ const SchedulePage: React.FC = () => {
             {/* ── Header ── */}
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Work Schedule</Text>
-                <TouchableOpacity 
-                style={styles.calendarBtn} 
-                activeOpacity={0.7}
-                onPress={() => router.push('/Schedule/allStaff')}
+                <TouchableOpacity
+                    style={styles.calendarBtn}
+                    activeOpacity={0.7}
+                    onPress={() => router.push('/Schedule/allStaff')}
                 >
                     <UserCog size={20} color="#2596BE" strokeWidth={2} />
                 </TouchableOpacity>
@@ -125,13 +187,18 @@ const SchedulePage: React.FC = () => {
                 </View>
 
                 {/* Staff List */}
-                {staff === null ? (
+                {loading ? (
                     <View style={styles.emptyState}>
+                        <ActivityIndicator size="large" color="#2596BE" />
                         <Text style={styles.emptyText}>Loading...</Text>
                     </View>
                 ) : currentStaff.length > 0 ? (
                     currentStaff.map(member => (
-                        <StaffCard key={member.id} member={member} onUnassign={handleUnassign} />
+                        <StaffCard
+                            key={member.user_id}
+                            member={member}
+                            onUnassign={handleUnassign}
+                        />
                     ))
                 ) : (
                     <View style={styles.emptyState}>
@@ -147,7 +214,7 @@ const SchedulePage: React.FC = () => {
                     onPress={() => router.push('/Schedule/createAccount')}
                 >
                     <UserPlus size={18} color="#fff" strokeWidth={2.5} style={{ marginRight: 8 }} />
-                    <Text style={styles.createBtnText}>Create New Account</Text>
+                    <Text style={styles.createBtnText}>Assign Staff</Text>
                 </TouchableOpacity>
 
                 <Text style={styles.createHint}>Add more staff members to your workspace</Text>
@@ -382,7 +449,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         gap: 3,
     },
-    navIconActive: {},
     navLabel: {
         fontSize: 10,
         color: TEXT_LIGHT,

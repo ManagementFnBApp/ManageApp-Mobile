@@ -58,7 +58,7 @@ export default function OrderPage() {
         }
         fetchProducts()
         fetchCategories()
-    }, [])
+    }, [products, categories])
 
     const updateCart = (id: string, delta: number) => {
         const next = Math.max(0, (cart[id] || 0) + delta);

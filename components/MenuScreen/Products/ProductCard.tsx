@@ -23,14 +23,23 @@ export default function ProductCard({ item, index }: ProductCardProps) {
         router.push({
             pathname: '/Menu/detailProduct',
             params: {
-                productId: item.productId,
-                productName: item.productName,
-                listPrice: item.listPrice,
-                importPrice: item.importPrice,
-                description: item.description || '',
-                categoryId: item.categoryId,
-                isActive: String(item.isActive),
-                sku: item.sku,
+                // ✅ Required params (from your DetailProductPage props)
+                PDid: item.productId.toString(),
+                PDname: item.productName,
+                PDbarcode: item.barcode || '',
+                PDprice: item.listPrice,
+
+                // ✅ Additional fields for full edit support
+                PDcategory: item.categoryId || '', // Category name for dropdown
+                PDdescription: item.description || '',
+                PDisActive: (item.isActive).toString() || '',
+                PDimage: item.image || '',
+
+                // ✅ Extra for UX (optional)
+                PDcategoryId: item.categoryId.toString(),
+                PDimportPrice: item.importPrice,
+                PDlistPrice: item.listPrice,
+                PDmeasureUnit: item.measureUnit || 'ly',
             },
         });
     };
@@ -45,7 +54,7 @@ export default function ProductCard({ item, index }: ProductCardProps) {
         >
             <View style={styles.imageWrapper}>
                 <Image
-                    source={{ uri: `https://placehold.co/400x300/f0f0f0/aaa?text=${encodeURIComponent(item.productName)}` }}
+                    source={{ uri: item.image }}
                     style={styles.image}
                 />
                 {!inStock && (
@@ -60,7 +69,7 @@ export default function ProductCard({ item, index }: ProductCardProps) {
                 <View style={styles.stockRow}>
                     <View style={[styles.dot, { backgroundColor: inStock ? GREEN : '#e74c3c' }]} />
                     <Text style={[styles.stockText, { color: inStock ? GREEN : '#e74c3c' }]}>
-                        {inStock ? 'IN STOCK' : 'SOLD OUT'}
+                        {inStock ? 'IS ACTIVE' : 'DE-ACTIVE'}
                     </Text>
                 </View>
             </View>

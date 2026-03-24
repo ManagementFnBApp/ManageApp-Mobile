@@ -1,4 +1,4 @@
-import { getMyShiftAssignmentsAsOwner, ShiftAssignment } from '@/apis/ShiftAPI';
+import { AppUser, getManagedUsers } from '@/apis/adminAPI';
 import { useAuth } from '@/providers/AuthProvider';
 import { useRouter } from 'expo-router';
 import {
@@ -12,6 +12,7 @@ import {
 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     Alert,
     Platform,
     SafeAreaView,
@@ -38,11 +39,11 @@ const getRoleLabel = (role: string): string => {
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
-const Avatar: React.FC<{ member: ShiftAssignment }> = ({ member }) => (
+const Avatar: React.FC<{ member: AppUser }> = ({ member }) => (
     <View style={[styles.avatar, { backgroundColor: '#585858' }]}>
         {1 === 1 //need to fix
             ? <User size={20} color="#aaa" strokeWidth={1.8} />
-            : <Text style={styles.avatarInitials}>{member.id}</Text>
+            : <Text style={styles.avatarInitials}>{member.user_id}</Text>
         }
     </View>
 );
@@ -50,8 +51,8 @@ const Avatar: React.FC<{ member: ShiftAssignment }> = ({ member }) => (
 // ─── Staff Row ────────────────────────────────────────────────────────────────
 
 const StaffRow: React.FC<{
-    member: ShiftAssignment;
-    onEdit: (member: ShiftAssignment) => void;
+    member: AppUser;
+    onEdit: (member: AppUser) => void;
     onDelete: (id: string) => void;
 }> = ({ member, onEdit, onDelete }) => (
     <View style={styles.staffRow}>
@@ -72,7 +73,7 @@ const StaffRow: React.FC<{
             </TouchableOpacity>
             <TouchableOpacity
                 style={styles.actionBtn}
-                onPress={() => onDelete(String(member.id))}
+                onPress={() => onDelete(String(member.user_id))}
                 activeOpacity={0.7}
             >
                 <Trash2 size={16} color="#9ca3af" strokeWidth={2} />
@@ -85,35 +86,36 @@ const StaffRow: React.FC<{
 
 const AllStaffPage: React.FC = () => {
     const auth = useAuth()
-    const [staff, setStaff] = useState<ShiftAssignment[]>([]);
+    const [staff, setStaff] = useState<AppUser[]>([]);
     const [search, setSearch] = useState('');
+    const [loading, setLoading] = useState(false)
     const router = useRouter();
 
     useEffect(() => {
         const fetchStaff = async () => {
-            const allStaffs = await getMyShiftAssignmentsAsOwner(auth?.user?.user_id);
-            console.log('staff: ', allStaffs)
+            setLoading(true)
+            const allStaffs = await getManagedUsers();
+            console.log('allstaff: ', allStaffs)
             setStaff(allStaffs);
+            setLoading(false)
         };
         fetchStaff();
-    }, [auth.loading]);
+    }, []);
 
     const filtered = staff.filter(m =>
-        m.username.toLowerCase().includes(search.toLowerCase()) ||
-        m.shift_name.toLowerCase().includes(search.toLowerCase())
+        m.username.toLowerCase().includes(search.toLowerCase())
     );
 
-    const handleEdit = (member: ShiftAssignment) => {
+    const handleEdit = (member: AppUser) => {
         router.push({
             pathname: '/Schedule/editAccount',
             params: {
-                id: member.id,
+                id: member.user_id,
                 fullName: member.username,
                 email: member.email,
                 role: member.role,
-                avatarColor: member.avatarColor,
-                initials: member.initials ?? '',
-                shifts: JSON.stringify(member.shifts),
+                avatarColor: '#f0f0f0',
+                initials: '',
             },
         });
     };
@@ -127,7 +129,7 @@ const AllStaffPage: React.FC = () => {
                 {
                     text: 'Remove',
                     style: 'destructive',
-                    onPress: () => setStaff(prev => prev.filter(m => m.id !== Number(id))),
+                    onPress: () => setStaff(prev => prev.filter(m => m.user_id !== Number(id))),
                 },
             ]
         );
@@ -139,7 +141,11 @@ const AllStaffPage: React.FC = () => {
 
             {/* ── Header ── */}
             <View style={styles.header}>
-                <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7}>
+                <TouchableOpacity
+                    style={styles.headerIconBtn}
+                    activeOpacity={0.7}
+                    onPress={() => router.back()}
+                >
                     <ArrowLeft size={20} color={TEXT_DARK} strokeWidth={2.5} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Account Management</Text>
@@ -172,52 +178,60 @@ const AllStaffPage: React.FC = () => {
             </TouchableOpacity>
 
             {/* ── List ── */}
-            <ScrollView
-                style={styles.scroll}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
-                {/* Section header */}
-                <View style={styles.listHeader}>
-                    <Text style={styles.listTitle}>Staff Members & Owners</Text>
-                    <View style={styles.totalBadge}>
-                        <Text style={styles.totalText}>{staff.length} TOTAL</Text>
-                    </View>
+            {loading ? (
+                <View style={styles.emptyState}>
+                    <ActivityIndicator size="large" color="#2596BE" />
+                    <Text style={styles.emptyText}>Loading...</Text>
                 </View>
-
-                {/* Staff cards */}
-                <View style={styles.listCard}>
-                    {filtered.length > 0 ? (
-                        filtered.map((member, index) => (
-                            <React.Fragment key={member.id}>
-                                <StaffRow
-                                    member={member}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
-                                />
-                                {index < filtered.length - 1 && <View style={styles.divider} />}
-                            </React.Fragment>
-                        ))
-                    ) : (
-                        <View style={styles.emptyState}>
-                            <User size={36} color="#d0d0d0" />
-                            <Text style={styles.emptyText}>No members found</Text>
+            ) : (
+                <ScrollView
+                    style={styles.scroll}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    {/* Section header */}
+                    <View style={styles.listHeader}>
+                        <Text style={styles.listTitle}>Staff Members & Owners</Text>
+                        <View style={styles.totalBadge}>
+                            <Text style={styles.totalText}>{staff.length} TOTAL</Text>
                         </View>
-                    )}
-                </View>
-            </ScrollView>
+                    </View>
+
+                    {/* Staff cards */}
+                    <View style={styles.listCard}>
+                        {filtered.length > 0 ? (
+                            filtered.map((member, index) => (
+                                <React.Fragment key={member.user_id}>
+                                    <StaffRow
+                                        member={member}
+                                        onEdit={handleEdit}
+                                        onDelete={handleDelete}
+                                    />
+                                    {index < filtered.length - 1 && <View style={styles.divider} />}
+                                </React.Fragment>
+                            ))
+                        ) : (
+                            <View style={styles.emptyState}>
+                                <User size={36} color="#d0d0d0" />
+                                <Text style={styles.emptyText}>No members found</Text>
+                            </View>
+                        )}
+                    </View>
+                </ScrollView>
+            )}
+
         </SafeAreaView>
     );
 };
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const PRIMARY          = '#2596BE';
-const TEXT_DARK        = '#1a1a2e';
-const TEXT_MID         = '#6b7280';
+const PRIMARY = '#2596BE';
+const TEXT_DARK = '#1a1a2e';
+const TEXT_MID = '#6b7280';
 const TEXT_PLACEHOLDER = '#b0b8c4';
-const BORDER           = '#f0f0f0';
-const SURFACE          = '#f7f8fa';
+const BORDER = '#f0f0f0';
+const SURFACE = '#f7f8fa';
 
 const styles = StyleSheet.create({
     safe: {

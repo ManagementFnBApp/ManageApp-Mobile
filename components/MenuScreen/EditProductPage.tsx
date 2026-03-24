@@ -1,10 +1,10 @@
 import { Feather, Ionicons, MaterialIcons } from '@expo/vector-icons';
-// import * as ImagePicker from 'expo-image-picker'; // ⏳ backend image upload not ready
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     Alert,
-    // Image, // ⏳ commented until image upload is ready
+    Image,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -27,144 +27,196 @@ import MenuHeader from './Components/MenuHeader';
 const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#2596BE';
 
 export type DetailProductParams = {
+    // Core (required)
     PDid?: string;
     PDname?: string;
+    PDbarcode?: string;
     PDprice?: number;
+
+    // ✅ New from handlePress
+    PDimportPrice?: number;
+    PDlistPrice?: number;
     PDcategory?: string;
+    PDcategoryId?: string;
     PDdescription?: string;
     PDinStock?: boolean;
-    PDcategoryOpen?: boolean;
     PDimage?: string;
+    PDmeasureUnit?: string;
+    PDisActive?: boolean;
 };
 
-// ⏳ Unused until backend supports image upload
-// type ImageFile = {
-//     uri: string;
-//     name: string;
-//     type: string;
-// };
+type ImageFile = {
+    uri: string;
+    name: string;
+    type: string;
+};
+
+type FormError = string | null;
 
 export default function DetailProductPage({
     PDid,
     PDname,
-    PDprice,
+    PDbarcode,
+    PDimportPrice,
+    PDlistPrice,
     PDcategory,
     PDdescription,
     PDinStock,
-    PDcategoryOpen,
+    PDisActive,
     PDimage,
 }: DetailProductParams) {
     const router = useRouter();
 
-    const [name, setName]               = useState(PDname || '');
-    const [price, setPrice]             = useState(PDprice ? PDprice.toString() : '');
-    const [category, setCategory]       = useState(PDcategory || '');
+    // Form state
+    const [name, setName] = useState(PDname || '');
+    const [barcode, setBarcode] = useState(PDbarcode || '');
+    const [price, setPrice] = useState(PDlistPrice ? PDlistPrice.toString() : '');
+    const [importPrice, setImportPrice] = useState(PDimportPrice ? PDimportPrice.toString() : ''); // Added separate import price
+    const [category, setCategory] = useState(PDcategory || '');
     const [description, setDescription] = useState(PDdescription || '');
-    const [inStock, setInStock]         = useState(PDinStock ?? false);
-    const [categoryOpen, setCategoryOpen] = useState(PDcategoryOpen ?? false);
-    const [loading, setLoading]         = useState(false);
-    const [editMode, setEditMode]       = useState(!!PDid);
+    const [inStock, setInStock] = useState(PDinStock ?? true);
+    const [isActive, setIsActive] = useState(PDisActive ?? true);
+    const [categoryOpen, setCategoryOpen] = useState(false);
+    const [imageFile, setImageFile] = useState<ImageFile | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(PDimage || null);
+
+    // UI state
+    const [loading, setLoading] = useState(false);
+    const [editMode, setEditMode] = useState(!!PDid);
     const [allCategories, setAllCategories] = useState<Category[]>([]);
+    const [formError, setFormError] = useState<FormError>(null);
 
-    // ⏳ Image state — disabled until backend is ready
-    // const [imageFile, setImageFile]     = useState<ImageFile | null>(null);
-    // const [imagePreview, setImagePreview] = useState<string | null>(PDimage || null);
-
-    useEffect(() => {
-        getCategories().then(setAllCategories).catch(console.warn);
+    const fetchCategories = useCallback(async () => {
+        try {
+            const categories = await getCategories();
+            setAllCategories(categories);
+        } catch (err) {
+            console.error('Failed to fetch categories:', err);
+            Alert.alert('Error', 'Failed to load categories');
+        }
     }, []);
 
     useEffect(() => {
+        fetchCategories();
+    }, [fetchCategories]);
+
+    // Reset form when params change
+    useEffect(() => {
         setName(PDname || '');
-        setPrice(PDprice ? PDprice.toString() : '');
+        setBarcode(PDbarcode || '');
+        setPrice(PDlistPrice ? PDlistPrice.toString() : '');
+        setImportPrice(PDimportPrice ? PDimportPrice.toString() : '');
         setCategory(PDcategory || '');
         setDescription(PDdescription || '');
-        setInStock(PDinStock ?? false);
-        setCategoryOpen(PDcategoryOpen ?? false);
+        setIsActive(PDisActive ?? true);
+        setImageFile(null);
+        setImagePreview(PDimage || null);
         setEditMode(!!PDid);
-        // setImageFile(null);                    // ⏳
-        // setImagePreview(PDimage || null);      // ⏳
-    }, [PDid, PDname, PDprice, PDcategory, PDdescription, PDinStock, PDcategoryOpen, PDimage]);
+        setFormError(null);
+    }, [PDid, PDname, PDbarcode, PDimportPrice, PDcategory, PDdescription, PDisActive, PDimage]);
 
-    // ===== IMAGE PICKER — disabled until backend is ready =====
-    // const handleUploadImage = async () => {
-    //     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    //     if (!permission.granted) {
-    //         Alert.alert('Permission required', 'Please allow access to your photo library.');
-    //         return;
-    //     }
-    //     const result = await ImagePicker.launchImageLibraryAsync({
-    //         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    //         allowsEditing: true,
-    //         quality: 0.8,
-    //     });
-    //     if (!result.canceled && result.assets.length > 0) {
-    //         const asset = result.assets[0];
-    //         const ext = asset.uri.split('.').pop() ?? 'jpg';
-    //         setImageFile({
-    //             uri: asset.uri,
-    //             name: asset.fileName ?? `photo_${Date.now()}.${ext}`,
-    //             type: asset.mimeType ?? `image/${ext}`,
-    //         });
-    //         setImagePreview(asset.uri);
-    //     }
-    // };
+    // ===== IMAGE PICKER =====
+    const handleUploadImage = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            quality: 0.8,
+            aspect: [1, 1],
+        });
 
-    // ===== HELPERS =====
+        if (!result.canceled && result.assets[0]) {
+            const asset = result.assets[0];
 
+            // ✅ PERFECT format for Multer
+            const imageFile = {
+                uri: asset.uri, // Keep as-is (file:// or content://)
+                name: asset.fileName || `product-${Date.now()}.jpg`,
+                type: asset.mimeType || 'image/jpeg',
+            } as ImageFile;
+
+            console.log('📱 Created imageFile:', imageFile);
+            setImageFile(imageFile);
+            setImagePreview(asset.uri);
+        }
+    };
+
+    // ===== VALIDATION =====
     const validate = (): boolean => {
         if (!name.trim()) {
-            Alert.alert('Validation', 'Please enter an item name');
+            setFormError('Product name is required');
             return false;
         }
-        if (!price.trim() || isNaN(Number(price)) || Number(price) <= 0) {
-            Alert.alert('Validation', 'Please enter a valid price');
+        if (!barcode.trim()) {
+            setFormError('Barcode is required');
+            return false;
+        }
+        if (!price.trim() || Number(price) <= 0) {
+            setFormError('Selling price must be greater than 0');
+            return false;
+        }
+        if (editMode && !importPrice.trim()) {
+            setFormError('Import price is required');
             return false;
         }
         if (!category) {
-            Alert.alert('Validation', 'Please select a category');
+            setFormError('Please select a category');
+            return false;
+        }
+        if (!editMode && !imageFile) {
+            setFormError('Please select a product image');
             return false;
         }
         return true;
     };
 
-    const getCategoryId = (): number => {
+    const getCategoryId = useCallback((): number => {
         const found = allCategories.find((c) => c.categoryName === category);
         return found?.id ?? 0;
-    };
+    }, [allCategories, category]);
 
-    // ===== HANDLERS =====
+    const getApiErrorMessage = useCallback((err: unknown): string => {
+        const e = err as { message?: string };
+        return e?.message ?? 'Something went wrong. Please try again.';
+    }, []);
 
+    // ===== SAVE/UPDATE =====
     const handleSave = async () => {
         if (!validate()) return;
 
         const categoryId = getCategoryId();
         if (!categoryId) {
-            Alert.alert('Validation', 'Selected category is invalid');
+            setFormError('Selected category is invalid');
+            return;
+        }
+
+        if (!imageFile && !editMode) {
+            setFormError('Please select an image');
             return;
         }
 
         setLoading(true);
+        setFormError(null);
+
         try {
             await createShopProduct({
                 productName: name.trim(),
                 categoryId,
-                // ⏳ image upload not ready — passing a placeholder to satisfy the type.
-                // Replace with real imageFile once backend supports it.
-                image: {
-                    uri: '',
-                    name: '',
-                    type: 'image/jpeg',
-                },
-                listPrice: Number(price),
-                importPrice: Number(price), // importPrice not exposed in UI — defaults to listPrice
+                image: imageFile!,
+                barcode: barcode.trim(),
                 description: description.trim() || undefined,
-                isActive: inStock,
+                measureUnit: 'ly', // default like web
+                importPrice: Number(importPrice || price),
+                listPrice: Number(price),
+                isActive: Boolean(isActive),
             });
-            Alert.alert('Success', 'Product created successfully');
-            router.back();
-        } catch (err: any) {
-            Alert.alert('Error', err?.message ?? 'Failed to create product');
+
+            Alert.alert('Success', 'Product created successfully!', [
+                { text: 'OK', onPress: () => router.back() }
+            ]);
+        } catch (err: unknown) {
+            const errorMsg = getApiErrorMessage(err);
+            setFormError(errorMsg);
+            Alert.alert('Error', errorMsg);
         } finally {
             setLoading(false);
         }
@@ -174,41 +226,50 @@ export default function DetailProductPage({
         if (!validate()) return;
 
         const productId = Number(PDid);
-        if (!productId) {
-            Alert.alert('Error', 'Invalid product ID');
-            return;
-        }
-
-        const categoryId = getCategoryId();
-        if (!categoryId) {
-            Alert.alert('Validation', 'Selected category is invalid');
+        if (!productId || isNaN(productId)) {
+            setFormError('Invalid product ID');
             return;
         }
 
         setLoading(true);
+        setFormError(null);
+
         try {
             await updateShopProduct(productId, {
+                // ✅ All fields with proper handling
                 productName: name.trim(),
-                categoryId,
-                // ⏳ image: imageFile ?? undefined — disabled until backend is ready
+
+                // ✅ Image only if new file selected
+                ...(imageFile ? { image: imageFile } : {}),
+
+                // ✅ Always send barcode (even if empty)
+                barcode: barcode.trim(),
+
+                // ✅ Fixed syntax error + proper null handling
+                ...(description.trim() ? { description: description.trim() } : {}),
+
+                // ✅ Prices with safe Number conversion
+                importPrice: Number(importPrice) || 0,
                 listPrice: Number(price),
-                importPrice: Number(price),
-                description: description.trim() || undefined,
-                isActive: inStock,
             });
-            Alert.alert('Success', 'Product updated successfully');
-            router.back();
-        } catch (err: any) {
-            Alert.alert('Error', err?.message ?? 'Failed to update product');
+
+            Alert.alert('Success', 'Product updated successfully!', [
+                { text: 'OK', onPress: () => router.back() }
+            ]);
+        } catch (err: unknown) {
+            const errorMsg = getApiErrorMessage(err);
+            setFormError(errorMsg);
+            Alert.alert('Error', errorMsg);
         } finally {
             setLoading(false);
         }
     };
 
+    // ===== DELETE =====
     const handleDelete = () => {
         Alert.alert(
-            'Delete Item',
-            'Are you sure you want to delete this item? This action cannot be undone.',
+            'Delete Product',
+            'This action cannot be undone!',
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
@@ -216,8 +277,10 @@ export default function DetailProductPage({
                     style: 'destructive',
                     onPress: async () => {
                         const productId = Number(PDid);
-                        if (!productId) return;
+                        if (!productId || isNaN(productId)) return;
+
                         setLoading(true);
+                        console.warn('Deleting:', PDid)
                         try {
                             await deleteShopProduct(productId);
                             router.back();
@@ -232,119 +295,167 @@ export default function DetailProductPage({
         );
     };
 
-    const handleAddCategory = () => {
-        Alert.alert('Add Category', 'Category creation coming soon');
-    };
-
-    // ===== RENDER =====
+    const selectedCategoryId = useMemo(() => getCategoryId(), [getCategoryId]);
 
     return (
         <KeyboardAvoidingView
             style={styles.root}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-            <MenuHeader editMode={editMode} />
+            <MenuHeader editMode={editMode} title={editMode ? `Edit: ${PDname}` : 'Add Product'} />
 
             <ScrollView
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                {/* Image Upload — disabled until backend is ready */}
+                {/* Form Error */}
+                {formError && (
+                    <View style={styles.errorContainer}>
+                        <Text style={styles.errorText}>{formError}</Text>
+                    </View>
+                )}
+
+                {/* Image Upload */}
                 <TouchableOpacity
                     style={styles.imageUpload}
-                    // onPress={handleUploadImage} // ⏳
+                    onPress={handleUploadImage}
                     activeOpacity={0.8}
-                    disabled // ⏳ remove when backend is ready
+                    disabled={loading}
                 >
-                    {/* ⏳ imagePreview ? (
+                    {imagePreview ? (
                         <Image source={{ uri: imagePreview }} style={styles.imagePreview} />
-                    ) : ( */}
+                    ) : (
                         <View style={styles.imagePlaceholder}>
                             <Feather name="camera" size={28} color="#bbb" />
                             <Text style={styles.imagePlaceholderText}>
-                                Image upload coming soon
+                                {editMode ? 'Tap to change image' : 'Tap to upload image'}
                             </Text>
                         </View>
-                    {/* )} */}
+                    )}
                 </TouchableOpacity>
 
-                {/* Item Name */}
+                {/* Product Name */}
                 <View style={styles.fieldGroup}>
-                    <Text style={styles.label}>Item Name</Text>
+                    <Text style={styles.label}>Product Name *</Text>
                     <TextInput
                         style={styles.input}
-                        placeholder="e.g. Signature Phở Special"
-                        placeholderTextColor="#bbb"
+                        placeholder="e.g. Cà phê sữa đá"
                         value={name}
                         onChangeText={setName}
+                        editable={!loading}
                     />
                 </View>
 
-                {/* Price */}
+                {/* Barcode */}
                 <View style={styles.fieldGroup}>
-                    <Text style={styles.label}>Price</Text>
-                    <View style={styles.priceWrapper}>
-                        <TextInput
-                            style={styles.priceInput}
-                            placeholder="0"
-                            placeholderTextColor="#bbb"
-                            value={price}
-                            onChangeText={setPrice}
-                            keyboardType="numeric"
-                        />
-                        <Text style={styles.currency}>VND</Text>
+                    <Text style={styles.label}>Barcode *</Text>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="e.g. CF-SUA-DA-001"
+                        value={barcode}
+                        onChangeText={setBarcode}
+                        editable={!loading}
+                    />
+                </View>
+
+                {/* Prices */}
+                <View style={styles.priceSection}>
+                    <View style={styles.fieldGroup}>
+                        <Text style={styles.label}>Import Price</Text>
+                        <View style={styles.priceWrapper}>
+                            <TextInput
+                                style={styles.priceInput}
+                                placeholder="0"
+                                value={importPrice}
+                                onChangeText={setImportPrice}
+                                keyboardType="numeric"
+                                editable={!loading}
+                            />
+                            <Text style={styles.currency}>VND</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.fieldGroup}>
+                        <Text style={styles.label}>Selling Price *</Text>
+                        <View style={styles.priceWrapper}>
+                            <TextInput
+                                style={styles.priceInput}
+                                placeholder="0"
+                                value={price}
+                                onChangeText={setPrice}
+                                keyboardType="numeric"
+                                editable={!loading}
+                            />
+                            <Text style={styles.currency}>VND</Text>
+                        </View>
                     </View>
                 </View>
 
                 {/* Category */}
                 <View style={styles.fieldGroup}>
                     <View style={styles.labelRow}>
-                        <Text style={styles.label}>Category</Text>
-                        <TouchableOpacity style={styles.addCategoryBtn} onPress={handleAddCategory}>
+                        <Text style={styles.label}>Category *</Text>
+                        <TouchableOpacity
+                            style={styles.addCategoryBtn}
+                            onPress={() => Alert.alert('Coming soon', 'Category management coming soon')}
+                            disabled={loading}
+                        >
                             <Ionicons name="add-circle" size={14} color={GREEN} />
-                            <Text style={styles.addCategoryText}>Add New Category</Text>
+                            <Text style={styles.addCategoryText}>Add Category</Text>
                         </TouchableOpacity>
                     </View>
 
                     <TouchableOpacity
-                        style={styles.dropdown}
-                        onPress={() => setCategoryOpen((o) => !o)}
+                        style={[
+                            styles.dropdown,
+                            !selectedCategoryId && styles.dropdownDisabled
+                        ]}
+                        onPress={() => !loading && setCategoryOpen((o) => !o)}
                         activeOpacity={0.8}
+                        disabled={loading}
                     >
-                        <Text style={[styles.dropdownText, !category && { color: '#bbb' }]}>
+                        <Text style={[
+                            styles.dropdownText,
+                            !category && { color: '#bbb' }
+                        ]}>
                             {category || 'Select a category'}
                         </Text>
-                        <Feather name={categoryOpen ? 'chevron-up' : 'chevron-down'} size={18} color="#888" />
+                        <Feather
+                            name={categoryOpen ? 'chevron-up' : 'chevron-down'}
+                            size={18}
+                            color="#888"
+                        />
                     </TouchableOpacity>
 
                     {categoryOpen && (
                         <View style={styles.dropdownList}>
-                            {allCategories.map((cat) => (
-                                <TouchableOpacity
-                                    key={cat.id}
-                                    style={[
-                                        styles.dropdownItem,
-                                        category === cat.categoryName && styles.dropdownItemActive,
-                                    ]}
-                                    onPress={() => {
-                                        setCategory(cat.categoryName);
-                                        setCategoryOpen(false);
-                                    }}
-                                >
-                                    <Text
+                            {allCategories.map((cat) => {
+                                const isSelected = category === cat.categoryName;
+                                return (
+                                    <TouchableOpacity
+                                        key={cat.id}
                                         style={[
-                                            styles.dropdownItemText,
-                                            category === cat.categoryName && styles.dropdownItemTextActive,
+                                            styles.dropdownItem,
+                                            isSelected && styles.dropdownItemActive
                                         ]}
+                                        onPress={() => {
+                                            setCategory(cat.categoryName);
+                                            setCategoryOpen(false);
+                                            setFormError(null);
+                                        }}
+                                        disabled={loading}
                                     >
-                                        {cat.categoryName}
-                                    </Text>
-                                    {category === cat.categoryName && (
-                                        <Feather name="check" size={14} color={GREEN} />
-                                    )}
-                                </TouchableOpacity>
-                            ))}
+                                        <Text style={[
+                                            styles.dropdownItemText,
+                                            isSelected && styles.dropdownItemTextActive
+                                        ]}>
+                                            {cat.categoryName}
+                                        </Text>
+                                        {isSelected && <Feather name="check" size={14} color={GREEN} />}
+                                    </TouchableOpacity>
+                                );
+                            })}
                         </View>
                     )}
                 </View>
@@ -354,13 +465,13 @@ export default function DetailProductPage({
                     <Text style={styles.label}>Description</Text>
                     <TextInput
                         style={styles.textarea}
-                        placeholder="Briefly describe the ingredients or taste profile..."
-                        placeholderTextColor="#bbb"
+                        placeholder="Briefly describe the product..."
                         value={description}
                         onChangeText={setDescription}
                         multiline
                         numberOfLines={4}
                         textAlignVertical="top"
+                        editable={!loading}
                     />
                 </View>
 
@@ -370,14 +481,17 @@ export default function DetailProductPage({
                         <MaterialIcons name="inventory" size={20} color={GREEN} />
                     </View>
                     <View style={styles.toggleLabels}>
-                        <Text style={styles.toggleTitle}>Available / In Stock</Text>
-                        <Text style={styles.toggleSubtitle}>Item will be visible on the menu</Text>
+                        <Text style={styles.toggleTitle}>Available</Text>
+                        <Text style={styles.toggleSubtitle}>
+                            {isActive ? 'Product is visible on menu' : 'Product is hidden from menu'}
+                        </Text>
                     </View>
                     <Switch
-                        value={inStock}
-                        onValueChange={setInStock}
+                        value={isActive}
+                        onValueChange={setIsActive}
                         trackColor={{ false: '#e0e0e0', true: GREEN }}
                         thumbColor="#fff"
+                        disabled={loading}
                     />
                 </View>
             </ScrollView>
@@ -387,37 +501,37 @@ export default function DetailProductPage({
                 {editMode ? (
                     <>
                         <TouchableOpacity
-                            style={[styles.primaryBtn, loading && { opacity: 0.6 }]}
+                            style={[styles.primaryBtn, loading && styles.disabledBtn]}
                             onPress={handleUpdate}
                             activeOpacity={0.85}
                             disabled={loading}
                         >
-                            <Feather name="save" size={18} color="#fff" style={{ marginRight: 8 }} />
+                            <Feather name="save" size={18} color="#fff" style={styles.icon} />
                             <Text style={styles.primaryBtnText}>
-                                {loading ? 'Updating...' : 'Update Item'}
+                                {loading ? 'Updating...' : 'Update Product'}
                             </Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={[styles.deleteBtn, loading && { opacity: 0.6 }]}
+                            style={[styles.deleteBtn, loading && styles.disabledBtn]}
                             onPress={handleDelete}
                             activeOpacity={0.85}
                             disabled={loading}
                         >
-                            <MaterialIcons name="delete-outline" size={18} color="#e74c3c" style={{ marginRight: 8 }} />
-                            <Text style={styles.deleteBtnText}>Delete Item</Text>
+                            <MaterialIcons name="delete-outline" size={18} color="#e74c3c" style={styles.icon} />
+                            <Text style={styles.deleteBtnText}>Delete</Text>
                         </TouchableOpacity>
                     </>
                 ) : (
                     <TouchableOpacity
-                        style={[styles.primaryBtn, loading && { opacity: 0.6 }]}
+                        style={[styles.primaryBtn, loading && styles.disabledBtn]}
                         onPress={handleSave}
                         activeOpacity={0.85}
                         disabled={loading}
                     >
-                        <Feather name="save" size={18} color="#fff" style={{ marginRight: 8 }} />
+                        <Feather name="plus" size={18} color="#fff" style={styles.icon} />
                         <Text style={styles.primaryBtnText}>
-                            {loading ? 'Saving...' : 'Save Item'}
+                            {loading ? 'Creating...' : 'Create Product'}
                         </Text>
                     </TouchableOpacity>
                 )}
@@ -426,6 +540,7 @@ export default function DetailProductPage({
     );
 }
 
+// Updated styles with error states and improvements
 const styles = StyleSheet.create({
     root: {
         flex: 1,
@@ -435,14 +550,30 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingBottom: 32,
     },
+    errorContainer: {
+        backgroundColor: '#fee2e2',
+        borderRadius: 10,
+        padding: 12,
+        marginBottom: 16,
+        borderLeftWidth: 4,
+        borderLeftColor: '#ef4444',
+    },
+    errorText: {
+        color: '#dc2626',
+        fontSize: 14,
+        lineHeight: 20,
+    },
     imageUpload: {
         marginVertical: 16,
         borderRadius: 14,
         overflow: 'hidden',
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: '#e4e7ec',
+        borderStyle: 'dashed',
         backgroundColor: '#fff',
         height: 180,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     imagePreview: {
         width: '100%',
@@ -450,17 +581,17 @@ const styles = StyleSheet.create({
         resizeMode: 'cover',
     },
     imagePlaceholder: {
-        flex: 1,
         alignItems: 'center',
-        justifyContent: 'center',
         gap: 8,
     },
     imagePlaceholderText: {
         fontSize: 13,
         color: '#bbb',
+        textAlign: 'center',
     },
     fieldGroup: {
         marginBottom: 18,
+        flex: 1
     },
     label: {
         fontSize: 13,
@@ -478,6 +609,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
+        paddingVertical: 4,
+        paddingHorizontal: 8,
     },
     addCategoryText: {
         fontSize: 12,
@@ -493,6 +626,11 @@ const styles = StyleSheet.create({
         paddingVertical: 13,
         fontSize: 14,
         color: '#111',
+    },
+    priceSection: {
+        flexDirection: 'row',
+        gap: 12,
+        marginBottom: 18,
     },
     priceWrapper: {
         flexDirection: 'row',
@@ -513,6 +651,7 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '600',
         color: '#888',
+        marginLeft: 8,
     },
     dropdown: {
         flexDirection: 'row',
@@ -525,9 +664,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         paddingVertical: 13,
     },
+    dropdownDisabled: {
+        borderColor: '#e4e7ec',
+        backgroundColor: '#fafbfc',
+    },
     dropdownText: {
         fontSize: 14,
         color: '#111',
+        flex: 1,
     },
     dropdownList: {
         backgroundColor: '#fff',
@@ -535,6 +679,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#e4e7ec',
         marginTop: 4,
+        maxHeight: 200,
         overflow: 'hidden',
     },
     dropdownItem: {
@@ -567,6 +712,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#111',
         minHeight: 100,
+        textAlignVertical: 'top',
     },
     toggleRow: {
         flexDirection: 'row',
@@ -622,6 +768,9 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 4,
     },
+    disabledBtn: {
+        opacity: 0.6,
+    },
     primaryBtnText: {
         color: '#fff',
         fontSize: 15,
@@ -642,4 +791,7 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '700',
     },
-});
+    icon: {
+        marginRight: 8,
+    },
+})

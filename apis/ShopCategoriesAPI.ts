@@ -1,43 +1,18 @@
-import { apiClient } from "@/configs/axios";
-
-// ===== TYPES =====
+import { apiClient } from "../configs/axios";
 
 export interface ShopCategoryItem {
   id: number;
   name: string;
 }
 
-// ===== HELPERS =====
-
 function unwrap<T>(raw: unknown): T {
-  if (raw != null && typeof raw === "object" && "data" in (raw as object)) {
+  if (raw && typeof raw === "object" && "data" in (raw as object)) {
     return (raw as { data: T }).data;
   }
   return raw as T;
 }
 
-type ShopCategoryRaw = {
-  category_id: number;
-  category?: {
-    id: number;
-    category_name?: string;
-    is_active?: boolean;
-  };
-};
-
-function mapShopCategory(item: ShopCategoryRaw): ShopCategoryItem {
-  return {
-    id: item.category?.id ?? item.category_id,
-    name: String(item.category?.category_name ?? ""),
-  };
-}
-
-// ===== SHOP-CATEGORY APIs =====
-
-/**
- * GET /shop-categories
- * SHOPOWNER + STAFF: danh mục đã được gắn vào shop (shop_id từ JWT).
- */
+/** GET /shop-categories - Danh mục mà cửa hàng đã chọn (SHOPOWNER, shop_id từ token) */
 export const getShopCategories = async (): Promise<ShopCategoryItem[]> => {
   const res = await apiClient.get("/shop-categories");
   const list = unwrap<Array<{ category_id: number; category?: { id: number; category_name?: string } }>>(res.data);
@@ -48,10 +23,7 @@ export const getShopCategories = async (): Promise<ShopCategoryItem[]> => {
   }));
 };
 
-/**
- * POST /shop-categories
- * SHOPOWNER: gắn một hoặc nhiều category vào shop.
- */
+/** POST /shop-categories - Thêm danh mục vào cửa hàng (category_id: number[]) */
 export const addShopCategories = async (
   categoryIds: number[]
 ): Promise<boolean> => {
@@ -60,12 +32,4 @@ export const addShopCategories = async (
   });
   const data = unwrap<unknown>(res.data);
   return data === true || (typeof data === "object" && data !== null);
-};
-
-/**
- * DELETE /shop-categories/:id
- * SHOPOWNER: gỡ một category khỏi shop.
- */
-export const removeShopCategory = async (categoryId: number): Promise<void> => {
-  await apiClient.delete(`/shop-categories/${categoryId}`);
 };
