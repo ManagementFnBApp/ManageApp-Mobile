@@ -14,9 +14,9 @@ import {
 } from 'react-native';
 
 //import { Category } from '@/apis/CategoriesAPI';
-import { getProducts, Product } from '@/apis/ProductsAPI';
-import { getShopCategories, ShopCategoryItem } from '@/apis/ShopCategoriesAPI';
+import { Category, getCategories, Product } from '@/apis/ProductsAPI';
 import { getShopProducts } from '@/apis/ShopProductsAPI';
+import Loading from '../LoadingScreen/Loading';
 import ProductsList from './Products/ProductsList';
 
 const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#2596BE';
@@ -24,23 +24,30 @@ const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#2596BE';
 export default function MenuPage() {
     const [search, setSearch] = useState('');
     const [activeCategory, setActiveCategory] = useState<number | 'All'>('All');
+    const [loading, setLoading] = useState(false)
 
-    const [categories, setCategories] = useState<ShopCategoryItem[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
+
+
     const router = useRouter();
 
+    const fetchProducts = async () => {
+        setLoading(true)
+        const allShopProducts = await getShopProducts();
+        // const allProducts = await getProducts();
+        setProducts([...allShopProducts]);
+    };
+    const fetchCategories = async () => {
+        setLoading(true)
+        const allCategories = await getCategories();
+        setCategories(allCategories);
+    };
+
     useEffect(() => {
-        const fetchProducts = async () => {
-            const allShopProducts = await getShopProducts();
-            const allProducts = await getProducts();
-            setProducts([...allProducts, ...allShopProducts]);
-        };
-        const fetchCategories = async () => {
-            const allCategories = await getShopCategories();
-            setCategories(allCategories);
-        };
         fetchProducts();
         fetchCategories();
+        setLoading(false)
     }, []);
 
     const filtered = products.filter(item => {
@@ -95,7 +102,7 @@ export default function MenuPage() {
                         activeOpacity={0.8}
                     >
                         <Text style={[styles.pillText, activeCategory === cat.id && styles.pillTextActive]}>
-                            {cat.name}
+                            {cat.categoryName}
                         </Text>
                     </TouchableOpacity>
                 ))}
@@ -104,6 +111,7 @@ export default function MenuPage() {
             {/* Product Grid */}
             <View style={styles.list}>
                 <ProductsList items={filtered} />
+                <Loading visible={loading} />
             </View>
 
             {/* FAB */}

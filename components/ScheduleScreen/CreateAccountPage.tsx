@@ -9,6 +9,7 @@ import {
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
+    Alert,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -116,7 +117,6 @@ const ShiftCard: React.FC<{
         onPress={onPress}
         activeOpacity={0.8}
     >
-        {/* Checkbox */}
         <View style={[styles.checkbox, selected && styles.checkboxActive]}>
             {selected && <View style={styles.checkboxInner} />}
         </View>
@@ -134,14 +134,14 @@ const ShiftCard: React.FC<{
 // ─── Main Component ────────────────────────────────────────────────────────────
 
 const CreateAccountPage: React.FC = () => {
-    const [fullName, setFullName]         = useState('');
-    const [email, setEmail]               = useState('');
-    const [password, setPassword]         = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [role, setRole]                 = useState<Role>('STAFF');
+    const [fullName, setFullName]             = useState('');
+    const [email, setEmail]                   = useState('');
+    const [password, setPassword]             = useState('');
+    const [showPassword, setShowPassword]     = useState(false);
+    const [role, setRole]                     = useState<Role>('STAFF');
     const [selectedShifts, setSelectedShifts] = useState<Set<ShiftTab>>(new Set(['Morning']));
 
-    const router = useRouter()
+    const router = useRouter();
 
     const toggleShift = (key: ShiftTab) => {
         setSelectedShifts(prev => {
@@ -151,10 +151,28 @@ const CreateAccountPage: React.FC = () => {
         });
     };
 
+    // ─── Validation ────────────────────────────────────────────────────────
+    const validate = (): string | null => {
+        if (!fullName.trim())   return 'Full name is required.';
+        if (!email.trim())      return 'Email or username is required.';
+        if (password.length < 6) return 'Password must be at least 6 characters.';
+        if (selectedShifts.size === 0) return 'Please select at least one shift.';
+        return null;
+    };
+
     const handleCreate = () => {
+        const error = validate();
+        if (error) {
+            Alert.alert('Validation Error', error);
+            return;
+        }
         // TODO: wire up to API
         console.log({ fullName, email, password, role, shifts: Array.from(selectedShifts) });
-        router.push('/')
+        router.back();
+    };
+
+    const handleCancel = () => {
+        router.back(); // ✅ was missing onPress
     };
 
     return (
@@ -163,7 +181,11 @@ const CreateAccountPage: React.FC = () => {
 
             {/* ── Header ── */}
             <View style={styles.header}>
-                <TouchableOpacity style={styles.backBtn} activeOpacity={0.7}>
+                <TouchableOpacity
+                    style={styles.backBtn}
+                    activeOpacity={0.7}
+                    onPress={() => router.back()} // ✅ was missing onPress
+                >
                     <ArrowLeft size={20} color={TEXT_DARK} strokeWidth={2.5} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Add New Member</Text>
@@ -235,14 +257,17 @@ const CreateAccountPage: React.FC = () => {
                         ))}
                     </View>
 
-                    {/* Spacer for bottom buttons */}
                     <View style={{ height: 100 }} />
                 </ScrollView>
             </KeyboardAvoidingView>
 
             {/* ── Footer Actions ── */}
             <View style={styles.footer}>
-                <TouchableOpacity style={styles.cancelBtn} activeOpacity={0.7}>
+                <TouchableOpacity
+                    style={styles.cancelBtn}
+                    activeOpacity={0.7}
+                    onPress={handleCancel} // ✅ was missing onPress
+                >
                     <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.createBtn} onPress={handleCreate} activeOpacity={0.85}>
@@ -256,8 +281,7 @@ const CreateAccountPage: React.FC = () => {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const PRIMARY          = '#2596BE';
-const PRIMARY_LIGHT    = '#e8faf1';
-const PRIMARY_BORDER   = '#b7efd4';
+const PRIMARY_LIGHT    = '#e8f6fb'; // ✅ fixed: was green-tinted, now matches blue PRIMARY
 const TEXT_DARK        = '#1a1a2e';
 const TEXT_MID         = '#6b7280';
 const TEXT_PLACEHOLDER = '#b0b8c4';

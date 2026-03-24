@@ -40,9 +40,12 @@ function mapShopCategory(item: ShopCategoryRaw): ShopCategoryItem {
  */
 export const getShopCategories = async (): Promise<ShopCategoryItem[]> => {
   const res = await apiClient.get("/shop-categories");
-  const list = unwrap<ShopCategoryRaw[]>(res.data);
+  const list = unwrap<Array<{ category_id: number; category?: { id: number; category_name?: string } }>>(res.data);
   const arr = Array.isArray(list) ? list : [];
-  return arr.map(mapShopCategory);
+  return arr.map((item) => ({
+    id: item.category?.id ?? item.category_id,
+    name: String(item.category?.category_name ?? ""),
+  }));
 };
 
 /**

@@ -80,7 +80,6 @@ export const login = async (data: LoginDto): Promise<LoginResponse> => {
 
   if (authData?.token) {
     const payload = decodeJwt<UserJwtPayload>(authData.token);
-    console.log('Payload: ', payload)
     const userRole = payload?.role ?? null;
 
     await storage.set('accessToken', authData.token);

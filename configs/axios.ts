@@ -1,9 +1,13 @@
 import axios, { AxiosError, AxiosInstance } from "axios";
 import * as SecureStore from "expo-secure-store";
+import { authEvents } from "./authEvents"; // 👈 add this (see below)
 
-// ensure base URL never has a trailing slash; prevents `//` when paths are appended
-const BASE_URL =
-  (process.env.EXPO_PUBLIC_BASE_URL || "http://192.168.137.1:2999").replace(/\/$/, "");
+// Ensure base URL never has a trailing slash
+const BASE_URL = (
+  process.env.EXPO_PUBLIC_BASE_URL || "http://192.168.137.1:2999"
+).replace(/\/$/, "");
+
+console.log("BASE_URL:", BASE_URL);
 
 export interface CustomError {
   status?: number;
@@ -25,37 +29,47 @@ export class ApiClientService {
   }
 
   private setupInterceptors() {
-    // ✅ attach token
-    this.instance.interceptors.request.use((config) => {
-      // Don't use async in request interceptor - use promise chain instead
-      return SecureStore.getItemAsync("token")
-        .then((token) => {
-          if (token) config.headers.Authorization = `Bearer ${token}`;
-          return config;
-        })
-        .catch((err) => {
-          console.warn("Failed to get token from SecureStore:", err);
-          return config;
-        });
-    });
+    // ─── Request: attach token ─────────────────────────────────────────────
+    this.instance.interceptors.request.use(
+      (config) =>
+        SecureStore.getItemAsync("accessToken") // ✅ fixed key: 'token' → 'accessToken'
+          .then((token) => {
+            if (token) config.headers.Authorization = `Bearer ${token}`;
+            return config;
+          })
+          .catch((err) => {
+            console.warn("Failed to get token from SecureStore:", err);
+            return config;
+          }),
+      (error) => Promise.reject(error)
+    );
 
-    // ✅ handle error
+    // ─── Response: handle errors ───────────────────────────────────────────
     this.instance.interceptors.response.use(
       (res) => res,
       async (error: AxiosError) => {
         const status = error.response?.status;
+        const data = error.response?.data as any;
 
         if (status === 401) {
-          await SecureStore.deleteItemAsync("token");
-          // AuthProvider sẽ tự redirect
+          await SecureStore.deleteItemAsync("accessToken"); // ✅ fixed key
+          authEvents.emit("logout"); // ✅ notify AuthProvider to clear state
+        }
+
+        if (status === 500) {
+          console.error(
+            "Server error:",
+            data?.message ?? data?.error ?? "Internal server error"
+          );
         }
 
         const customError: CustomError = {
           status,
           message:
-            (error.response?.data as any)?.message ||
-            error.message ||
-            "API error",
+            // Handle array of messages (e.g. NestJS class-validator errors)
+            Array.isArray(data?.message)
+              ? data.message.join(", ")
+              : data?.message || error.message || "API error",
           originalError: error,
         };
 

@@ -1,4 +1,5 @@
-import { getAllStaffList, StaffAccount } from '@/apis/ScheduleAPI';
+import { getMyShiftAssignmentsAsOwner, ShiftAssignment } from '@/apis/ShiftAPI';
+import { useAuth } from '@/providers/AuthProvider';
 import { useRouter } from 'expo-router';
 import {
     ArrowLeft,
@@ -37,11 +38,11 @@ const getRoleLabel = (role: string): string => {
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
-const Avatar: React.FC<{ member: StaffAccount }> = ({ member }) => (
-    <View style={[styles.avatar, { backgroundColor: member.avatarColor }]}>
-        {member.avatarColor === '#e0e0e0'
+const Avatar: React.FC<{ member: ShiftAssignment }> = ({ member }) => (
+    <View style={[styles.avatar, { backgroundColor: '#585858' }]}>
+        {1 === 1 //need to fix
             ? <User size={20} color="#aaa" strokeWidth={1.8} />
-            : <Text style={styles.avatarInitials}>{member.initials}</Text>
+            : <Text style={styles.avatarInitials}>{member.id}</Text>
         }
     </View>
 );
@@ -49,17 +50,17 @@ const Avatar: React.FC<{ member: StaffAccount }> = ({ member }) => (
 // ─── Staff Row ────────────────────────────────────────────────────────────────
 
 const StaffRow: React.FC<{
-    member: StaffAccount;
-    onEdit: (member: StaffAccount) => void;
+    member: ShiftAssignment;
+    onEdit: (member: ShiftAssignment) => void;
     onDelete: (id: string) => void;
 }> = ({ member, onEdit, onDelete }) => (
     <View style={styles.staffRow}>
         <Avatar member={member} />
         <View style={styles.staffInfo}>
-            <Text style={styles.staffName}>{member.fullName}</Text>
-            <Text style={[styles.staffRole, { color: getRoleColor(member.role) }]}>
+            <Text style={styles.staffName}>{member.username}</Text>
+            {/* <Text style={[styles.staffRole, { color: getRoleColor(member.role) }]}>
                 {getRoleLabel(member.role)}
-            </Text>
+            </Text> */}
         </View>
         <View style={styles.staffActions}>
             <TouchableOpacity
@@ -71,7 +72,7 @@ const StaffRow: React.FC<{
             </TouchableOpacity>
             <TouchableOpacity
                 style={styles.actionBtn}
-                onPress={() => onDelete(member.id)}
+                onPress={() => onDelete(String(member.id))}
                 activeOpacity={0.7}
             >
                 <Trash2 size={16} color="#9ca3af" strokeWidth={2} />
@@ -83,29 +84,31 @@ const StaffRow: React.FC<{
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const AllStaffPage: React.FC = () => {
-    const [staff, setStaff] = useState<StaffAccount[]>([]);
+    const auth = useAuth()
+    const [staff, setStaff] = useState<ShiftAssignment[]>([]);
     const [search, setSearch] = useState('');
     const router = useRouter();
 
     useEffect(() => {
         const fetchStaff = async () => {
-            const allStaffs = await getAllStaffList();
+            const allStaffs = await getMyShiftAssignmentsAsOwner(auth?.user?.user_id);
+            console.log('staff: ', allStaffs)
             setStaff(allStaffs);
         };
         fetchStaff();
-    }, []);
+    }, [auth.loading]);
 
     const filtered = staff.filter(m =>
-        m.fullName.toLowerCase().includes(search.toLowerCase()) ||
-        m.role.toLowerCase().includes(search.toLowerCase())
+        m.username.toLowerCase().includes(search.toLowerCase()) ||
+        m.shift_name.toLowerCase().includes(search.toLowerCase())
     );
 
-    const handleEdit = (member: StaffAccount) => {
+    const handleEdit = (member: ShiftAssignment) => {
         router.push({
             pathname: '/Schedule/editAccount',
             params: {
                 id: member.id,
-                fullName: member.fullName,
+                fullName: member.username,
                 email: member.email,
                 role: member.role,
                 avatarColor: member.avatarColor,
@@ -124,7 +127,7 @@ const AllStaffPage: React.FC = () => {
                 {
                     text: 'Remove',
                     style: 'destructive',
-                    onPress: () => setStaff(prev => prev.filter(m => m.id !== id)),
+                    onPress: () => setStaff(prev => prev.filter(m => m.id !== Number(id))),
                 },
             ]
         );

@@ -1,10 +1,10 @@
-import { MenuItem } from "@/apis/ProductsAPI";
+import { Product } from "@/apis/ProductsAPI";
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || '#2596BE';
 
 type Props = {
-    rows: MenuItem[][],
+    rows: Product[][],
     cart: Record<string, number>,
     updateCart: (id: string, qty: number) => void
 }
@@ -18,25 +18,25 @@ export default function ProductsList({rows, cart, updateCart}: Props) {
             showsVerticalScrollIndicator={false}
             renderItem={({ item: row }) => (
                 <View style={styles.row}>
-                    {row.map((product: MenuItem) => {
-                        const qty = cart[product.PDid] || 0;
+                    {row.map((product: Product) => {
+                        const qty = cart[product.productId] || 0;
                         return (
-                            <View key={product.PDid} style={styles.card}>
-                                <Image source={{ uri: product.PDimage }} style={styles.cardImg} />
-                                <Text style={styles.cardName}>{product.PDname}</Text>
-                                <Text style={styles.cardPrice}>{formatPrice(product.PDprice)}</Text>
+                            <View key={product.productId} style={styles.card}>
+                                <Image source={{ uri: product.image }} style={styles.cardImg} />
+                                <Text style={styles.cardName}>{product.productName}</Text>
+                                <Text style={styles.cardPrice}>{formatPrice(product.listPrice)}</Text>
                                 <View style={styles.cardFooter}>
                                     {qty > 0 ? (
                                         <View style={styles.qtyRow}>
                                             <TouchableOpacity
-                                                onPress={() => updateCart(product.PDid, -1)}
+                                                onPress={() => updateCart(String(product.productId), -1)}
                                                 style={styles.qtyBtn}
                                             >
                                                 <Text style={styles.qtyBtnText}>−</Text>
                                             </TouchableOpacity>
                                             <Text style={styles.qtyNum}>{qty}</Text>
                                             <TouchableOpacity
-                                                onPress={() => updateCart(product.PDid, 1)}
+                                                onPress={() => updateCart(String(product.productId), 1)}
                                                 style={styles.qtyBtn}
                                             >
                                                 <Text style={styles.qtyBtnText}>+</Text>
@@ -44,7 +44,7 @@ export default function ProductsList({rows, cart, updateCart}: Props) {
                                         </View>
                                     ) : (
                                         <TouchableOpacity
-                                            onPress={() => updateCart(product.PDid, 1)}
+                                            onPress={() => updateCart(String(product.productId), 1)}
                                             style={styles.addBtn}
                                         >
                                             <Text style={styles.addBtnText}>+</Text>

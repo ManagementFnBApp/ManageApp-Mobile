@@ -1,4 +1,5 @@
-import { getAllCategories, getAllProducts, MenuItem } from "@/apis/ProductsAPI";
+import { Category, getCategories, Product } from "@/apis/ProductsAPI";
+import { getShopProducts } from "@/apis/ShopProductsAPI";
 import { useCartStore } from "@/store/cartStore";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -19,28 +20,40 @@ const GREEN = process.env.EXPO_PUBLIC_MAIN_COLOR || "#2596BE";
 
 export default function OrderPage() {
     const router = useRouter();
-    const [activeCategory, setActiveCategory] = useState<string>("All");
+    const [activeCategory, setActiveCategory] = useState<Category>(
+        {
+            id: 0,
+            categoryName: 'All',
+            isActive: true
+        }
+    );
     const [search, setSearch] = useState("");
 
     const cart = useCartStore((s) => s.cart);
     const setCart = useCartStore((s) => s.setCart);
 
-    const [products, setProducts] = useState<MenuItem[]>([]);
-    const [categories, setCategories] = useState<string[]>(['All']);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
 
-    const filtered = products.filter((p) => {
-        const matchCat = activeCategory === "All" || p.PDcategory === activeCategory;
-        const matchSearch = p.PDname.toLowerCase().includes(search.toLowerCase());
+    const filtered = products.filter(p => {
+        const matchCat = activeCategory.categoryName === "All" || p.categoryId === activeCategory.id;
+        const matchSearch = p.productName.toLowerCase().includes(search.toLowerCase());
         return matchCat && matchSearch;
     });
 
+    // const filtered = products.filter(item => {
+    //     const matchCategory = activeCategory === 'All' || item.categoryId === activeCategory;
+    //     const matchSearch = item.productName.toLowerCase().includes(search.toLowerCase());
+    //     return matchCategory && matchSearch;
+    // });
+
     useEffect(() => {
         const fetchProducts = async () => {
-            const allProducts = await getAllProducts()
+            const allProducts = await getShopProducts()
             setProducts(allProducts)
         }
         const fetchCategories = async () => {
-            const allCategories = await getAllCategories()
+            const allCategories = await getCategories()
             setCategories(allCategories)
         }
         fetchProducts()
@@ -55,12 +68,12 @@ export default function OrderPage() {
 
     const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
     const totalPrice = Object.entries(cart).reduce((sum, [id, qty]) => {
-        const product = products.find((p) => p.PDid === String(id));
-        return sum + (product?.PDprice || 0) * qty;
+        const product = products.find((p) => p.productId === Number(id));
+        return sum + (product?.listPrice || 0) * qty;
     }, 0);
 
     // Pair products into rows of 2
-    const rows: MenuItem[][] = [];
+    const rows: Product[][] = [];
     for (let i = 0; i < filtered.length; i += 2) {
         rows.push(filtered.slice(i, i + 2));
     }
@@ -109,13 +122,13 @@ export default function OrderPage() {
                 >
                     {categories.map(cat => (
                         <TouchableOpacity
-                            key={cat}
+                            key={cat.id}
                             style={[styles.pill, activeCategory === cat && styles.pillActive]}
                             onPress={() => setActiveCategory(cat)}
                             activeOpacity={0.8}
                         >
                             <Text style={[styles.pillText, activeCategory === cat && styles.pillTextActive]}>
-                                {cat}
+                                {cat.categoryName}
                             </Text>
                         </TouchableOpacity>
                     ))}

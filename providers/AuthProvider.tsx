@@ -1,6 +1,7 @@
 import { decodeJwt, UserJwtPayload } from '@/lib/jwt';
 import * as SecureStore from 'expo-secure-store';
 import { createContext, useContext, useEffect, useState } from 'react';
+import { Alert } from 'react-native';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,13 +35,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     restore();
   }, []);
 
+  // ─── Auto-logout when token expires ────────────────────────────────────────
+  useEffect(() => {
+    if (!user) return;
+
+    const msUntilExpiry = user.expiredTime * 1000 - Date.now();
+
+    // Already expired (e.g. set just after restore edge case)
+    if (msUntilExpiry <= 0) {
+      logout();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      Alert.alert(
+        'Session Expired',
+        'Your session has expired. Please log in again.',
+        [{ text: 'OK', onPress: logout }]
+      );
+    }, msUntilExpiry);
+
+    return () => clearTimeout(timer);
+  }, [user]);
+
+  // ─── Helpers ───────────────────────────────────────────────────────────────
+
+  /** Returns true if the token's expiry time has passed */
+  const isExpired = (u: AuthUser): boolean => u.expiredTime * 1000 < Date.now();
+
   /** Decode a JWT string into an AuthUser object */
   const parseUser = (tokenStr: string): AuthUser | null => {
     try {
       const payload = decodeJwt<UserJwtPayload>(tokenStr);
       if (!payload) return null;
+
       return {
-        user_id: payload.user_id ?? payload.sub,
+        user_id: (payload as any).id ?? payload.user_id ?? Number(payload.sub),
         username: payload.username ?? '',
         role: payload.role ?? null,
         expiredTime: payload.exp ?? 0,
@@ -50,13 +80,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // ─── Actions ───────────────────────────────────────────────────────────────
+
   /** Restore token from SecureStore on app launch */
   const restore = async () => {
     try {
-      const stored = await SecureStore.getItemAsync('token');
+      const stored = await SecureStore.getItemAsync('accessToken');
       if (stored) {
-        setToken(stored);
-        setUser(parseUser(stored));
+        const parsed = parseUser(stored);
+        if (parsed && !isExpired(parsed)) {
+          setToken(stored);
+          setUser(parsed);
+        } else {
+          // Token is expired or invalid — clean up silently
+          await SecureStore.deleteItemAsync('accessToken');
+        }
       }
     } catch (err) {
       console.warn('AuthProvider: failed to restore token', err);
@@ -80,17 +118,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    await SecureStore.setItemAsync('token', tokenStr);
+    await SecureStore.setItemAsync('accessToken', tokenStr);
     setToken(tokenStr);
     setUser(parseUser(tokenStr));
   };
 
   /** Clear session */
   const logout = async () => {
-    await SecureStore.deleteItemAsync('token');
+    await SecureStore.deleteItemAsync('accessToken');
     setToken(null);
     setUser(null);
   };
+
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <AuthContext.Provider value={{ token, user, login, logout, loading }}>
@@ -101,4 +141,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
+};

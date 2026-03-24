@@ -15,11 +15,12 @@ export function decodeJwt<T = Record<string, unknown>>(token: string): T | null 
 }
 
 export interface UserJwtPayload {
-    user_id: number;
-    sub: number;
-    username: string;
-    role: string | null;
-    ownerManagerId?: number | null;
-    iat?: number;
-    exp?: number;
+  id?: number;       // ← add this
+  user_id?: number;
+  sub?: string;
+  username?: string;
+  role?: string;
+  exp?: number;
+  shop_id?: number;          // bonus: available if you need it
+  owner_manager_id?: number | null;
 }

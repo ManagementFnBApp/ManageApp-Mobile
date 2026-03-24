@@ -94,7 +94,7 @@ export const getCategories = async (): Promise<Category[]> => {
   const res = await apiClient.get("/categories");
   const list = unwrap<Record<string, unknown>[]>(res.data);
   const arr = Array.isArray(list) ? list : [];
-  
+
   return arr.map(mapBackendCategoryToFrontend);
 };
 
@@ -184,11 +184,16 @@ export function mapToMenuItem(
 // ===== PRODUCT APIs =====
 
 export const getProducts = async (isActive?: boolean): Promise<Product[]> => {
-  const params: Record<string, string> = {};
-  if (isActive === true) params.isActive = "true";
-  else if (isActive === false) params.isActive = "false";
-  const res = await apiClient.get("/products", { params });
-  return normalizeProductList(res.data);
+  try {
+    const params: Record<string, string> = {};
+    if (isActive === true) params.isActive = "true";
+    else if (isActive === false) params.isActive = "false";
+    const res = await apiClient.get("/products", { params });
+    return normalizeProductList(res.data);
+  } catch (error) {
+    console.error('getProducts: ', error);
+    return normalizeProductList(PRODUCT_SEED_DATA)
+  } 
 };
 
 export const getActiveProducts = async (): Promise<Product[]> =>

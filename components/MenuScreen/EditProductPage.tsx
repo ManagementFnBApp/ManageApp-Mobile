@@ -1,10 +1,10 @@
 import { Feather, Ionicons, MaterialIcons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
+// import * as ImagePicker from 'expo-image-picker'; // ⏳ backend image upload not ready
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     Alert,
-    Image,
+    // Image, // ⏳ commented until image upload is ready
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -16,7 +16,7 @@ import {
     View,
 } from 'react-native';
 
-import { ShopCategoryItem, getShopCategories } from '@/apis/ShopCategoriesAPI';
+import { Category, getCategories } from '@/apis/ProductsAPI';
 import {
     createShopProduct,
     deleteShopProduct,
@@ -37,11 +37,12 @@ export type DetailProductParams = {
     PDimage?: string;
 };
 
-type ImageFile = {
-    uri: string;
-    name: string;
-    type: string;
-};
+// ⏳ Unused until backend supports image upload
+// type ImageFile = {
+//     uri: string;
+//     name: string;
+//     type: string;
+// };
 
 export default function DetailProductPage({
     PDid,
@@ -55,23 +56,22 @@ export default function DetailProductPage({
 }: DetailProductParams) {
     const router = useRouter();
 
-    const [name, setName] = useState(PDname || '');
-    const [price, setPrice] = useState(PDprice ? PDprice.toString() : '');
-    const [category, setCategory] = useState(PDcategory || '');
+    const [name, setName]               = useState(PDname || '');
+    const [price, setPrice]             = useState(PDprice ? PDprice.toString() : '');
+    const [category, setCategory]       = useState(PDcategory || '');
     const [description, setDescription] = useState(PDdescription || '');
-    const [inStock, setInStock] = useState(PDinStock ?? false);
+    const [inStock, setInStock]         = useState(PDinStock ?? false);
     const [categoryOpen, setCategoryOpen] = useState(PDcategoryOpen ?? false);
-    const [imageFile, setImageFile] = useState<ImageFile | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(PDimage || null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading]         = useState(false);
+    const [editMode, setEditMode]       = useState(!!PDid);
+    const [allCategories, setAllCategories] = useState<Category[]>([]);
 
-    const [editMode, setEditMode] = useState(!!PDid);
-    const [allCategories, setAllCategories] = useState<ShopCategoryItem[]>([]);
+    // ⏳ Image state — disabled until backend is ready
+    // const [imageFile, setImageFile]     = useState<ImageFile | null>(null);
+    // const [imagePreview, setImagePreview] = useState<string | null>(PDimage || null);
 
     useEffect(() => {
-        getShopCategories()
-            .then(setAllCategories)
-            .catch((err) => console.error('Failed to load categories:', err));
+        getCategories().then(setAllCategories).catch(console.warn);
     }, []);
 
     useEffect(() => {
@@ -81,44 +81,43 @@ export default function DetailProductPage({
         setDescription(PDdescription || '');
         setInStock(PDinStock ?? false);
         setCategoryOpen(PDcategoryOpen ?? false);
-        setImageFile(null);
-        setImagePreview(PDimage || null);
         setEditMode(!!PDid);
+        // setImageFile(null);                    // ⏳
+        // setImagePreview(PDimage || null);      // ⏳
     }, [PDid, PDname, PDprice, PDcategory, PDdescription, PDinStock, PDcategoryOpen, PDimage]);
 
-    // ===== IMAGE PICKER =====
+    // ===== IMAGE PICKER — disabled until backend is ready =====
+    // const handleUploadImage = async () => {
+    //     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    //     if (!permission.granted) {
+    //         Alert.alert('Permission required', 'Please allow access to your photo library.');
+    //         return;
+    //     }
+    //     const result = await ImagePicker.launchImageLibraryAsync({
+    //         mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    //         allowsEditing: true,
+    //         quality: 0.8,
+    //     });
+    //     if (!result.canceled && result.assets.length > 0) {
+    //         const asset = result.assets[0];
+    //         const ext = asset.uri.split('.').pop() ?? 'jpg';
+    //         setImageFile({
+    //             uri: asset.uri,
+    //             name: asset.fileName ?? `photo_${Date.now()}.${ext}`,
+    //             type: asset.mimeType ?? `image/${ext}`,
+    //         });
+    //         setImagePreview(asset.uri);
+    //     }
+    // };
 
-    const handleUploadImage = async () => {
-        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!permission.granted) {
-            Alert.alert('Permission required', 'Please allow access to your photo library.');
-            return;
-        }
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            quality: 0.8,
-        });
-        if (!result.canceled && result.assets.length > 0) {
-            const asset = result.assets[0];
-            const ext = asset.uri.split('.').pop() ?? 'jpg';
-            setImageFile({
-                uri: asset.uri,
-                name: asset.fileName ?? `photo_${Date.now()}.${ext}`,
-                type: asset.mimeType ?? `image/${ext}`,
-            });
-            setImagePreview(asset.uri);
-        }
-    };
-
-    // ===== VALIDATION =====
+    // ===== HELPERS =====
 
     const validate = (): boolean => {
         if (!name.trim()) {
             Alert.alert('Validation', 'Please enter an item name');
             return false;
         }
-        if (!price.trim() || isNaN(Number(price))) {
+        if (!price.trim() || isNaN(Number(price)) || Number(price) <= 0) {
             Alert.alert('Validation', 'Please enter a valid price');
             return false;
         }
@@ -130,7 +129,7 @@ export default function DetailProductPage({
     };
 
     const getCategoryId = (): number => {
-        const found = allCategories.find((c) => c.name === category);
+        const found = allCategories.find((c) => c.categoryName === category);
         return found?.id ?? 0;
     };
 
@@ -138,23 +137,27 @@ export default function DetailProductPage({
 
     const handleSave = async () => {
         if (!validate()) return;
-        if (!imageFile) {
-            Alert.alert('Validation', 'Please select an image for the product');
-            return;
-        }
+
         const categoryId = getCategoryId();
         if (!categoryId) {
             Alert.alert('Validation', 'Selected category is invalid');
             return;
         }
+
         setLoading(true);
         try {
             await createShopProduct({
                 productName: name.trim(),
                 categoryId,
-                image: imageFile,
+                // ⏳ image upload not ready — passing a placeholder to satisfy the type.
+                // Replace with real imageFile once backend supports it.
+                image: {
+                    uri: '',
+                    name: '',
+                    type: 'image/jpeg',
+                },
                 listPrice: Number(price),
-                importPrice: Number(price), // importPrice not exposed in UI — default to listPrice
+                importPrice: Number(price), // importPrice not exposed in UI — defaults to listPrice
                 description: description.trim() || undefined,
                 isActive: inStock,
             });
@@ -169,22 +172,25 @@ export default function DetailProductPage({
 
     const handleUpdate = async () => {
         if (!validate()) return;
+
         const productId = Number(PDid);
         if (!productId) {
             Alert.alert('Error', 'Invalid product ID');
             return;
         }
+
         const categoryId = getCategoryId();
         if (!categoryId) {
             Alert.alert('Validation', 'Selected category is invalid');
             return;
         }
+
         setLoading(true);
         try {
             await updateShopProduct(productId, {
                 productName: name.trim(),
                 categoryId,
-                image: imageFile ?? undefined, // only send if user picked a new image
+                // ⏳ image: imageFile ?? undefined — disabled until backend is ready
                 listPrice: Number(price),
                 importPrice: Number(price),
                 description: description.trim() || undefined,
@@ -244,16 +250,23 @@ export default function DetailProductPage({
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                {/* Image Upload */}
-                <TouchableOpacity style={styles.imageUpload} onPress={handleUploadImage} activeOpacity={0.8}>
-                    {imagePreview ? (
+                {/* Image Upload — disabled until backend is ready */}
+                <TouchableOpacity
+                    style={styles.imageUpload}
+                    // onPress={handleUploadImage} // ⏳
+                    activeOpacity={0.8}
+                    disabled // ⏳ remove when backend is ready
+                >
+                    {/* ⏳ imagePreview ? (
                         <Image source={{ uri: imagePreview }} style={styles.imagePreview} />
-                    ) : (
+                    ) : ( */}
                         <View style={styles.imagePlaceholder}>
                             <Feather name="camera" size={28} color="#bbb" />
-                            <Text style={styles.imagePlaceholderText}>Tap to upload image</Text>
+                            <Text style={styles.imagePlaceholderText}>
+                                Image upload coming soon
+                            </Text>
                         </View>
-                    )}
+                    {/* )} */}
                 </TouchableOpacity>
 
                 {/* Item Name */}
@@ -310,13 +323,26 @@ export default function DetailProductPage({
                             {allCategories.map((cat) => (
                                 <TouchableOpacity
                                     key={cat.id}
-                                    style={[styles.dropdownItem, category === cat.name && styles.dropdownItemActive]}
-                                    onPress={() => { setCategory(cat.name); setCategoryOpen(false); }}
+                                    style={[
+                                        styles.dropdownItem,
+                                        category === cat.categoryName && styles.dropdownItemActive,
+                                    ]}
+                                    onPress={() => {
+                                        setCategory(cat.categoryName);
+                                        setCategoryOpen(false);
+                                    }}
                                 >
-                                    <Text style={[styles.dropdownItemText, category === cat.name && styles.dropdownItemTextActive]}>
-                                        {cat.name}
+                                    <Text
+                                        style={[
+                                            styles.dropdownItemText,
+                                            category === cat.categoryName && styles.dropdownItemTextActive,
+                                        ]}
+                                    >
+                                        {cat.categoryName}
                                     </Text>
-                                    {category === cat.name && <Feather name="check" size={14} color={GREEN} />}
+                                    {category === cat.categoryName && (
+                                        <Feather name="check" size={14} color={GREEN} />
+                                    )}
                                 </TouchableOpacity>
                             ))}
                         </View>

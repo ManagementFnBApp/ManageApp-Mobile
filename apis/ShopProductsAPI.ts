@@ -111,10 +111,14 @@ function normalizeShopProductList(raw: unknown): Product[] {
  * Filtering by isActive is done client-side since BE returns all.
  */
 export const getShopProducts = async (
-  isActive?: boolean
+  isActive?: boolean,
 ): Promise<Product[]> => {
   const res = await apiClient.get("/shop-products");
-  const products = normalizeShopProductList(res.data);
+  const raw = unwrap<unknown>(res.data);
+  const arr = Array.isArray(raw) ? raw : [];
+  const products = arr.map((item) =>
+    mapShopProduct((item as Record<string, unknown>) ?? {}),
+  );
   if (isActive !== undefined) {
     return products.filter((p) => p.isActive === isActive);
   }
@@ -148,13 +152,11 @@ export const createShopProduct = async (
   form.append("importPrice", String(payload.importPrice));
   form.append("isActive", String(payload.isActive ?? true));
 
-  if (payload.barcode?.trim()) form.append("barcode", payload.barcode.trim());
+  if (payload.barcode?.trim()) form.append("barcode", payload.barcode.trim() || '');
   if (payload.description?.trim()) form.append("description", payload.description.trim());
   if (payload.measureUnit?.trim()) form.append("measureUnit", payload.measureUnit.trim());
 
-  const res = await apiClient.post("/shop-products", form, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const res = await apiClient.post("/shop-products", form);
   const raw = unwrap<Record<string, unknown>>(res.data);
   return mapShopProduct(raw ?? {});
 };
