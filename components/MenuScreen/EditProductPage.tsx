@@ -211,7 +211,7 @@ export default function DetailProductPage({
             });
 
             Alert.alert('Success', 'Product created successfully!', [
-                { text: 'OK', onPress: () => router.back() }
+                { text: 'OK', onPress: () => router.push('/(tabs)/Menu') }
             ]);
         } catch (err: unknown) {
             const errorMsg = getApiErrorMessage(err);
@@ -254,7 +254,7 @@ export default function DetailProductPage({
             });
 
             Alert.alert('Success', 'Product updated successfully!', [
-                { text: 'OK', onPress: () => router.back() }
+                { text: 'OK', onPress: () => router.push('/(tabs)/Menu') }
             ]);
         } catch (err: unknown) {
             const errorMsg = getApiErrorMessage(err);
@@ -283,7 +283,7 @@ export default function DetailProductPage({
                         console.warn('Deleting:', PDid)
                         try {
                             await deleteShopProduct(productId);
-                            router.back();
+                            router.push('/(tabs)/Menu');
                         } catch (err: any) {
                             Alert.alert('Error', err?.message ?? 'Failed to delete product');
                         } finally {

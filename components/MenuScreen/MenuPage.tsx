@@ -109,9 +109,14 @@ export default function MenuPage() {
             </ScrollView>
 
             {/* Product Grid */}
-            <View style={styles.list}>
-                <ProductsList items={filtered} />
-            </View>
+            {loading ? (
+                <Loading visible={loading} />
+            ) : (
+                <View style={styles.list}>
+                    <ProductsList items={filtered} />
+                </View>
+            )}
+
 
             {/* FAB */}
             <TouchableOpacity

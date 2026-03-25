@@ -135,6 +135,10 @@ const SchedulePage: React.FC = () => {
         );
     };
 
+    const AssignStaffBtn = () => {
+        router.push({ pathname: '/(tabs)/Schedule/AssignStaff', params: { shift_tab: activeShift } });
+    }
+
     // ── Render ─────────────────────────────────────────────────────────────────
 
     return (
@@ -211,7 +215,7 @@ const SchedulePage: React.FC = () => {
                 <TouchableOpacity
                     style={styles.createBtn}
                     activeOpacity={0.85}
-                    onPress={() => router.push('/Schedule/createAccount')}
+                    onPress={AssignStaffBtn}
                 >
                     <UserPlus size={18} color="#fff" strokeWidth={2.5} style={{ marginRight: 8 }} />
                     <Text style={styles.createBtnText}>Assign Staff</Text>

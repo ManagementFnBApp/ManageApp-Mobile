@@ -33,7 +33,11 @@ export default function OrderPage() {
     const setCart = useCartStore((s) => s.setCart);
 
     const [products, setProducts] = useState<Product[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
+    const [categories, setCategories] = useState<Category[]>([{
+        id: 0,
+        categoryName: 'All',
+        isActive: true
+    }]);
 
     const filtered = products.filter(p => {
         const matchCat = activeCategory.categoryName === "All" || p.categoryId === activeCategory.id;
@@ -54,11 +58,14 @@ export default function OrderPage() {
         }
         const fetchCategories = async () => {
             const allCategories = await getCategories()
-            setCategories(allCategories)
+            setCategories([
+                { id: 0, categoryName: 'All', isActive: true },
+                ...allCategories
+            ])
         }
         fetchProducts()
         fetchCategories()
-    }, [products, categories])
+    }, [])
 
     const updateCart = (id: string, delta: number) => {
         const next = Math.max(0, (cart[id] || 0) + delta);
@@ -123,11 +130,11 @@ export default function OrderPage() {
                     {categories.map(cat => (
                         <TouchableOpacity
                             key={cat.id}
-                            style={[styles.pill, activeCategory === cat && styles.pillActive]}
+                            style={[styles.pill, activeCategory.id === cat.id && styles.pillActive]}
                             onPress={() => setActiveCategory(cat)}
                             activeOpacity={0.8}
                         >
-                            <Text style={[styles.pillText, activeCategory === cat && styles.pillTextActive]}>
+                            <Text style={[styles.pillText, activeCategory.id === cat.id && styles.pillTextActive]}>
                                 {cat.categoryName}
                             </Text>
                         </TouchableOpacity>
