@@ -1,7 +1,7 @@
-import OrderPage from "@/components/OrdersScreen/OrderPage";
+import InventoryPage from "./InventoryPage";
 
 export default function Orders() {
   return (
-    <OrderPage />
+    <InventoryPage />
   )
 }

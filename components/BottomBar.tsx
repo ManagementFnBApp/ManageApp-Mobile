@@ -1,4 +1,4 @@
-import { Calendar, Clipboard, LayoutGrid, Plus, Settings } from "lucide-react-native";
+import { Box, Calendar, Clipboard, LayoutGrid, Settings } from "lucide-react-native";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -11,7 +11,7 @@ export default function PosBottomBar({ state, navigation }: any) {
   const tabs = [
     { name: "Home/index", icon: <LayoutGrid size={22} color="rgb(114, 134, 134)" />},
     { name: "Menu/index", icon: <Clipboard size={22} color="rgb(114, 134, 134)" /> },
-    { name: "Orders/index", icon: <Plus size={36} color="rgb(255, 255, 255)" /> }, // FAB
+    { name: "Orders/index", icon: <Box size={36} color="rgb(255, 255, 255)" /> }, // FAB
     { name: "Schedule/index", icon: <Calendar size={22} color="rgb(114, 134, 134)" /> },
     { name: "Settings/index", icon: <Settings size={22} color="rgb(114, 134, 134)" /> },
   ];
@@ -32,7 +32,7 @@ export default function PosBottomBar({ state, navigation }: any) {
                 <View style={styles.fab}>
                   {tab.icon}
                 </View>
-                <Text style={[styles.label, isFocused && styles.active]}>Orders</Text>
+                <Text style={[styles.label, isFocused && styles.active]}>Inventory</Text>
               </TouchableOpacity>
             );
           }

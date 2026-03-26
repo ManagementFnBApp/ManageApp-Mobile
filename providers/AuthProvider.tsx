@@ -7,6 +7,7 @@ import { Alert } from 'react-native';
 
 export interface AuthUser {
   user_id: number;
+  shop_id:number;
   username: string;
   role: string | null;
   expiredTime: number;
@@ -70,7 +71,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!payload) return null;
 
       return {
-        user_id: (payload as any).id ?? payload.user_id ?? Number(payload.sub),
+        user_id: (payload as any).id ?? payload.id ?? Number(payload.id),
+        shop_id: Number(payload.shop_id),
         username: payload.username ?? '',
         role: payload.role ?? null,
         expiredTime: payload.exp ?? 0,

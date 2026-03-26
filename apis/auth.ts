@@ -15,6 +15,7 @@ const storage = {
       SecureStore.deleteItemAsync('userId'),
       SecureStore.deleteItemAsync('username'),
       SecureStore.deleteItemAsync('role'),
+      SecureStore.deleteItemAsync('shopId'),
     ]),
 };
 
@@ -86,6 +87,7 @@ export const login = async (data: LoginDto): Promise<LoginResponse> => {
     await storage.set('userId', String(authData.user_id));
     await storage.set('username', data.username);
     await storage.set('role', userRole ?? '');
+    await storage.set('shopId', String(payload?.shop_id));
   }
 
   const payload = decodeJwt<UserJwtPayload>(authData.token);
