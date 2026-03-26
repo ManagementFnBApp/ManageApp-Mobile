@@ -3,7 +3,7 @@ import { getShopProducts } from "@/apis/ShopProductsAPI";
 import { useCartStore } from "@/store/cartStore";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { History, Menu } from "lucide-react-native";
+import { History } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
     SafeAreaView,
@@ -91,9 +91,9 @@ export default function OrderPage() {
 
                 {/* Header */}
                 <View style={styles.header}>
-                    <TouchableOpacity style={styles.iconBtn}>
+                    {/* <TouchableOpacity style={styles.iconBtn}>
                         <Menu />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                     <Text style={styles.headerTitle}>New Order</Text>
                     <TouchableOpacity
                         style={styles.iconBtn}

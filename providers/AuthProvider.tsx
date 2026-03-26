@@ -94,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           // Token is expired or invalid — clean up silently
           await SecureStore.deleteItemAsync('accessToken');
+          logout()
         }
       }
     } catch (err) {

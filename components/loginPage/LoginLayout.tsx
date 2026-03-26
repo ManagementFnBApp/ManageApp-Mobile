@@ -9,7 +9,6 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View
 } from 'react-native';
 
@@ -19,7 +18,7 @@ import Login from '@/components/loginPage/Login';
 import Register from '@/components/loginPage/Register';
 import SuccessPopup from '@/components/Notifications/Success';
 import { useAuth } from '@/providers/AuthProvider';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import ErrorPopup from '../Notifications/Error';
 
 
@@ -42,6 +41,14 @@ export default function LoginPage() {
   const auth = useAuth();
   const router = useRouter();
   const { login } = auth!;
+
+  const params = useLocalSearchParams<{ errorMessage?: string }>();
+
+  useEffect(() => {
+    if (params.errorMessage) {
+      showError(decodeURIComponent(params.errorMessage));
+    }
+  }, [params.errorMessage]);
 
   useEffect(() => {
     if (auth?.token) {
@@ -138,7 +145,7 @@ export default function LoginPage() {
       </ImageBackground>
 
       {/* Tab Switcher */}
-      <View style={styles.tabContainer}>
+      {/* <View style={styles.tabContainer}>
         <View style={styles.tabBackground}>
           <Animated.View
             style={[
@@ -165,7 +172,7 @@ export default function LoginPage() {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </View> */}
 
       {/* Form Area */}
       <ScrollView

@@ -95,11 +95,10 @@ const AllStaffPage: React.FC = () => {
         const fetchStaff = async () => {
             setLoading(true)
             const allStaffs = await getManagedUsers();
-            console.log('allstaff: ', allStaffs)
             setStaff(allStaffs);
-            setLoading(false)
         };
         fetchStaff();
+        setLoading(false)
     }, []);
 
     const filtered = staff.filter(m =>

@@ -1,34 +1,183 @@
-export const STATUS_COLORS: Record<OrderStatus, { bg: string; text: string }> = {
-  Pending:   { bg: "#fff7ed", text: "#f97316" },
-  Preparing: { bg: "#eff6ff", text: "#3b82f6" },
-  Ready:     { bg: "#f0fdf4", text: "#22c55e" },
-  Completed: { bg: "#f3f4f6", text: "#6b7280" },
-  Cancelled: { bg: "#fef2f2", text: "#ef4444" },
-};
+import { apiClient } from '../configs/axios';
 
-export const ACTIVE_STATUSES: OrderStatus[] = ["Pending", "Preparing", "Ready"];
+// ===== TYPES (khớp backend OrderDto, OrderResponseDto) =====
 
-export type OrderStatus = "Pending" | "Preparing" | "Ready" | "Completed" | "Cancelled";
-export type FilterTab = "All" | "Active" | "Completed";
-
-export type Order = {
-  id: string;
-  orderId: string;
-  customer: string | null;
-  table: string | null;
-  time: string;
-  total: number;
-  status: OrderStatus;
-};
-
-export const getAllOrders = async () => {
-    return orders;
+export interface OrderItemPayload {
+  /** ID sản phẩm toàn hệ thống (dùng khi order từ catalog global) */
+  product_id?: number;
+  /** ID sản phẩm của shop (dùng khi order từ /shop-products — ưu tiên) */
+  shop_product_id?: number;
+  quantity: number;
+  unit_price: number;
 }
 
-const orders: Order[] = [
-  { id: "1", orderId: "ORD-1234", customer: null, table: "Table 05", time: "12:45 PM", total: 42.5, status: "Pending" },
-  { id: "2", orderId: "ORD-1233", customer: "John Doe", table: null, time: "12:30 PM", total: 18.2, status: "Preparing" },
-  { id: "3", orderId: "ORD-1230", customer: null, table: "Table 12", time: "12:15 PM", total: 85.0, status: "Ready" },
-  { id: "4", orderId: "ORD-1225", customer: "Sarah Smith", table: null, time: "11:45 AM", total: 34.9, status: "Completed" },
-  { id: "5", orderId: "ORD-1220", customer: null, table: "Table 02", time: "10:30 AM", total: 0.0, status: "Cancelled" },
-];
+/** Body tạo đơn - backend OrderDto: shiftUserId (id bảng shift_users), customerId?, note?, totalAmount, order_items */
+export interface CreateOrderPayload {
+  customerId?: number;
+  /** ID ca làm (shift_users.id) - bắt buộc */
+  shiftUserId: number;
+  note?: string;
+  totalAmount: number;
+  order_items: OrderItemPayload[];
+}
+
+/** Body cập nhật đơn - backend OrderDto yêu cầu shiftUserId + order_items (bắt buộc) */
+export interface UpdateOrderPayload {
+  customerId?: number;
+  shiftUserId?: number;
+  note?: string;
+  totalAmount?: number;
+  /** Bắt buộc gửi kèm: backend sẽ xóa items cũ và tạo lại */
+  order_items?: OrderItemPayload[];
+}
+
+export interface OrderItemResponse {
+  id: number;
+  product_id: number | null;
+  shop_product_id?: number | null;
+  quantity: number;
+  unit_price: number;
+  product_name?: string;
+  product?: { product_name?: string } | null;
+  shop_product?: { product_name?: string } | null;
+}
+
+/** Khớp backend OrderResponseDto - có shiftUserId */
+export interface OrderResponse {
+  id: number;
+  customerId?: number | null;
+  shiftUserId: number;
+  note: string | null;
+  totalAmount: number;
+  orderStatus: string;
+  createdAt?: string | null;
+  completedAt?: string | null;
+  cancelledAt?: string | null;
+  order_items?: OrderItemResponse[];
+}
+
+export interface OrderReportByDate {
+  date: string;
+  numberOfOrders: number;
+  totalAmount: number;
+}
+
+export interface OrderReportResponse {
+  numberOfOrders: number;
+  reportByDate: OrderReportByDate[];
+}
+
+// ===== HELPERS =====
+
+function unwrap<T>(raw: unknown): T {
+  if (raw && typeof raw === 'object' && 'data' in (raw as object)) {
+    return (raw as { data: T }).data;
+  }
+  return raw as T;
+}
+
+function isOrderReportByDate(value: unknown): value is OrderReportByDate {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const item = value as Record<string, unknown>;
+  return (
+    typeof item.date === 'string' &&
+    typeof item.numberOfOrders === 'number' &&
+    typeof item.totalAmount === 'number'
+  );
+}
+
+function isOrderReportResponse(value: unknown): value is OrderReportResponse {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const report = value as Record<string, unknown>;
+  return (
+    typeof report.numberOfOrders === 'number' &&
+    Array.isArray(report.reportByDate) &&
+    report.reportByDate.every(isOrderReportByDate)
+  );
+}
+
+// ===== ORDER APIs =====
+
+export const createOrder = async (
+  payload: CreateOrderPayload,
+): Promise<OrderResponse> => {
+  const res = await apiClient.post('/orders', {
+    customerId: payload.customerId,
+    shiftUserId: payload.shiftUserId,
+    note: payload.note,
+    totalAmount: payload.totalAmount,
+    order_items: payload.order_items,
+  });
+  return unwrap<OrderResponse>(res.data);
+};
+
+export const updateOrder = async (
+  id: number,
+  payload: UpdateOrderPayload,
+): Promise<OrderResponse> => {
+  const res = await apiClient.put(`/orders/${id}`, payload);
+  return unwrap<OrderResponse>(res.data);
+};
+
+export const completeOrder = async (
+  id: number,
+): Promise<OrderResponse> => {
+  const res = await apiClient.put(`/orders/${id}/complete`);
+  return unwrap<OrderResponse>(res.data);
+};
+
+export const cancelOrder = async (
+  id: number,
+): Promise<OrderResponse> => {
+  const res = await apiClient.put(`/orders/${id}/cancel`);
+  return unwrap<OrderResponse>(res.data);
+};
+
+/** POST /orders/list - body { status?: string } - Backend lấy user từ JWT */
+export const getOrders = async (
+  status?: string,
+): Promise<OrderResponse[]> => {
+  const res = await apiClient.post('/orders/list', status ? { status } : {});
+  const list = unwrap<OrderResponse[]>(res.data);
+  return Array.isArray(list) ? list : [];
+};
+
+export const getOrderReport = async (
+  year: number,
+  month: number,
+): Promise<OrderReportResponse> => {
+  const res = await apiClient.post('/orders/report', { year, month });
+  const data = unwrap<unknown>(res.data);
+
+  if (!isOrderReportResponse(data)) {
+    throw new Error('orders/report returned invalid payload');
+  }
+
+  return data;
+};
+
+// ===== SHIFT APIs =====
+
+export interface ShiftUserInfo {
+  id: number;
+  shift_id: number;
+  shift_name: string;
+  user_id: number;
+  username: string;
+  shop_id: number;
+  notes: string | null;
+  created_at: string;
+}
+
+/** GET /shifts/users - Lấy tất cả shift assignments của shop (SHOPOWNER) */
+export const getShiftUsers = async (): Promise<ShiftUserInfo[]> => {
+  const res = await apiClient.get('/shifts/users');
+  const list = unwrap<ShiftUserInfo[]>(res.data);
+  return Array.isArray(list) ? list : [];
+};

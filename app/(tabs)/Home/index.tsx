@@ -13,8 +13,8 @@ export default function Home() {
 
   useEffect(() => {
     console.log('user: ', auth)
-    if (auth?.user?.role === null && auth?.loading === false) {
-      router.push('/SubscriptionPage')
+    if (auth?.user?.role !== 'SHOPOWNER' && auth?.loading === false) {
+      router.push('/loginPage')
     }
   }, [auth])
 

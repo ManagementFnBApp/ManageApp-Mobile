@@ -31,6 +31,11 @@ const SHIFT_NAME_MAP: Record<ShiftTab, string> = {
     Evening: 'TỐI',
 };
 
+const DateStranfer = ({member, allShift}: {member: AppUser, allShift: ShiftAssignment[]}) => {
+    const shiftInfo = allShift.filter((as) => as.user_id === member.user_id)
+    return shiftInfo[0]
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 const Avatar: React.FC<{ member: AppUser }> = ({ member }) => {
@@ -55,9 +60,10 @@ const Avatar: React.FC<{ member: AppUser }> = ({ member }) => {
 };
 
 const StaffCard: React.FC<{
+    allShift: ShiftAssignment[]
     member: AppUser;
     onUnassign: (id: string) => void;
-}> = ({ member, onUnassign }) => (
+}> = ({allShift, member, onUnassign }) => (
     <View style={styles.staffCard}>
         <View style={styles.staffLeft}>
             <Avatar member={member} />
@@ -66,6 +72,7 @@ const StaffCard: React.FC<{
                     {member.profile?.full_name || member.username}
                 </Text>
                 <Text style={styles.staffRole}>{member.role}</Text>
+                <Text>{DateStranfer({member, allShift}).date}</Text>
             </View>
         </View>
         {/* Unassign button — uncomment when ready
@@ -201,6 +208,7 @@ const SchedulePage: React.FC = () => {
                         <StaffCard
                             key={member.user_id}
                             member={member}
+                            allShift={allShift}
                             onUnassign={handleUnassign}
                         />
                     ))

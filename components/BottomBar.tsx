@@ -9,7 +9,7 @@ export default function PosBottomBar({ state, navigation }: any) {
   const insets = useSafeAreaInsets();
 
   const tabs = [
-    { name: "Home", icon: <LayoutGrid size={22} color="rgb(114, 134, 134)" />},
+    { name: "Home/index", icon: <LayoutGrid size={22} color="rgb(114, 134, 134)" />},
     { name: "Menu/index", icon: <Clipboard size={22} color="rgb(114, 134, 134)" /> },
     { name: "Orders/index", icon: <Plus size={36} color="rgb(255, 255, 255)" /> }, // FAB
     { name: "Schedule/index", icon: <Calendar size={22} color="rgb(114, 134, 134)" /> },

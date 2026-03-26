@@ -11,15 +11,10 @@ export default function Index() {
     return <Redirect href="/loginPage" />;
   }
 
-  // Redirect based on role
-  if (auth.user?.role === 'ADMIN') {
+  if (auth.user?.role === 'SHOPOWNER') {
+    return <Redirect href="/(tabs)/Home" />;
+  } else {
     return <Redirect href="/loginPage" />;
   }
 
-  if (auth.user?.role === 'SHOPOWNER') {
-    return <Redirect href="/(tabs)/Home" />;
-  }
-
-  // New user with no active subscription — send to subscription page
-  return <Redirect href="/SubscriptionPage" />;
 }

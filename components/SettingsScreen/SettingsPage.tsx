@@ -116,7 +116,7 @@ export default function SettingsPage() {
                 <View style={styles.profileSection}>
                     <View style={styles.avatarWrapper}>
                         <Image
-                            source={{ uri: 'https://i.pravatar.cc/150?img=11' }}
+                            source={{ uri: '' }}
                             style={styles.avatar}
                         />
                         <TouchableOpacity style={styles.avatarEdit}>
@@ -133,25 +133,25 @@ export default function SettingsPage() {
                     <SettingRow
                         icon={<Feather name="user" size={18} color={GREEN} />}
                         label="Profile Information"
-                        onPress={() => router.push('/Menu')}
+                        onPress={() => router.push('./Settings/ProfilePage')}
                     />
                     <View style={styles.divider} />
-                    <SettingRow
+                    {/* <SettingRow
                         icon={<Feather name="lock" size={18} color={GREEN} />}
                         label="Change Password"
                         onPress={() => router.push('/Menu')}
-                    />
+                    /> */}
                 </Section>
 
                 {/* Restaurant Management */}
-                <Section title="RESTAURANT MANAGEMENT">
+                {/* <Section title="RESTAURANT MANAGEMENT">
                     <SettingRow
                         icon={<MaterialIcons name="storefront" size={18} color={GREEN} />}
                         label="Restaurant Info"
                         onPress={() => router.push('/Menu')}
                     />
                     <View style={styles.divider} />
-                    {/* <SettingRow
+                    <SettingRow
                         icon={<MaterialCommunityIcons name="table-chair" size={18} color={GREEN} />}
                         label="Table Layout"
                         onPress={() => router.push('/Menu')}
@@ -161,8 +161,8 @@ export default function SettingsPage() {
                         icon={<Feather name="clock" size={18} color={GREEN} />}
                         label="Business Hours"
                         onPress={() => router.push('/Menu')}
-                    /> */}
-                </Section>
+                    />
+                </Section> */}
 
                 {/* App Settings
                 <Section title="APP SETTINGS">
@@ -208,7 +208,7 @@ export default function SettingsPage() {
                 </Section> */}
 
                 {/* Support */}
-                <Section title="SUPPORT">
+                {/* <Section title="SUPPORT">
                     <SettingRow
                         icon={<Feather name="help-circle" size={18} color={GREEN} />}
                         label="Help Center"
@@ -220,7 +220,7 @@ export default function SettingsPage() {
                         label="Terms of Service"
                         onPress={() => router.push('/Menu')}
                     />
-                </Section>
+                </Section> */}
 
                 {/* Log Out */}
                 <View style={styles.section}>
@@ -288,6 +288,7 @@ const styles = StyleSheet.create({
         borderRadius: 40,
         borderWidth: 2,
         borderColor: GREEN,
+        backgroundColor: '#e1e1e1'
     },
     avatarEdit: {
         position: 'absolute',

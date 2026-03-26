@@ -39,9 +39,9 @@ export default function Login({ loading, setLoading, handleLogin }: { loading: b
             <View style={styles.inputGroup}>
                 <View style={styles.labelRow}>
                     <Text style={styles.label}>Password</Text>
-                    <TouchableOpacity>
+                    {/* <TouchableOpacity>
                         <Text style={styles.forgotText}>Forgot?</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
                 <View style={styles.inputWrapper}>
                     <FontAwesome name="lock" size={20} color="#aaa" style={styles.icon} />
